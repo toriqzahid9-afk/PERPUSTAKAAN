@@ -60,8 +60,26 @@ async function openBook(id) {
     flipbook.innerHTML = ''; // Reset konten sebelumnya
 
     try {
-        const pdfData = await book.pdf.blob.arrayBuffer();
+        console.log('Mencoba memuat buku:', book.title);
+        
+        if (typeof pdfjsLib === 'undefined') {
+            throw new Error('Library PDF.js belum dimuat. Periksa koneksi internet Anda.');
+        }
+
+        // Cek data PDF
+        if (!book.pdf) throw new Error('Data PDF tidak ditemukan pada objek buku.');
+        
+        // Ambil blob (bisa di book.pdf.blob atau langsung di book.pdf)
+        const pdfBlob = book.pdf.blob || book.pdf;
+        
+        if (!(pdfBlob instanceof Blob)) {
+            throw new Error('Data PDF bukan merupakan Blob/File yang valid.');
+        }
+
+        const pdfData = await pdfBlob.arrayBuffer();
         const pdf     = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+        console.log('PDF berhasil dimuat. Jumlah halaman:', pdf.numPages);
 
         // Render setiap halaman PDF ke elemen <canvas>
         for (let i = 1; i <= pdf.numPages; i++) {
@@ -87,7 +105,7 @@ async function openBook(id) {
             width: isMobile ? window.innerWidth * 0.95 : (window.innerWidth > 1000 ? 1000 : window.innerWidth * 0.9),
             height: isMobile ? window.innerHeight * 0.7 : window.innerHeight * 0.8,
             autoCenter: true,
-            display: isMobile ? 'single' : 'double', // Single page on mobile
+            display: isMobile ? 'single' : 'double',
             acceleration: true,
             gradients: true,
             when: {
@@ -100,8 +118,8 @@ async function openBook(id) {
         spinner.style.display = 'none';
 
     } catch (err) {
-        console.error('Gagal memuat PDF:', err);
-        alert('File PDF rusak atau tidak bisa dibuka.');
+        console.error('CRITICAL ERROR:', err);
+        alert('Gagal memuat buku: ' + err.message);
         closeReader();
     }
 }
