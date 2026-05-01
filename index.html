@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan Digital - Delpik</title>
+    <meta name="description" content="Delpik Digital - Koleksi buku digital terpercaya. Baca langsung tanpa download.">
+
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ============================================= -->
+    <!--   OVERLAY READER (FLIPBOOK)                   -->
+    <!-- ============================================= -->
+    <div id="reader-overlay">
+        <div class="close-reader" onclick="closeReader()">
+            <i class="fas fa-times"></i>
+        </div>
+
+        <!-- Spinner Loading -->
+        <div id="loading-spinner" class="loader-overlay">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mb-4"></div>
+            <p class="text-cyan-500 text-sm animate-pulse">Menyiapkan Pengalaman Membaca...</p>
+        </div>
+
+        <!-- Flipbook -->
+        <div id="flipbook-container">
+            <div id="flipbook"></div>
+        </div>
+
+        <!-- Kontrol Navigasi Halaman -->
+        <div class="reader-controls">
+            <button class="nav-btn" onclick="$('#flipbook').turn('previous')">
+                <i class="fas fa-chevron-left mr-2"></i> Sebelumnya
+            </button>
+            <span id="page-number" class="text-xs self-center text-gray-400">Hal. 1</span>
+            <button class="nav-btn" onclick="$('#flipbook').turn('next')">
+                Selanjutnya <i class="fas fa-chevron-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!--   NAVIGASI (NAVBAR)                           -->
+    <!-- ============================================= -->
+    <nav class="glass-nav fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+            <!-- Logo -->
+            <div onclick="handleLogoClick()" class="flex items-center space-x-3 cursor-pointer group">
+                <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center text-black shadow-lg shadow-cyan-500/20 group-hover:rotate-12 transition">
+                    <i class="fas fa-book-open text-xl"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tighter">DELPIK <span class="neon-text">DIGITAL</span></span>
+            </div>
+
+            <!-- Menu (Desktop) -->
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="javascript:void(0)" onclick="showPage('main-view')" class="text-sm font-medium hover:text-cyan-400 transition">Beranda</a>
+                <a href="#katalog-section" onclick="showPage('main-view')" class="text-sm font-medium hover:text-cyan-400 transition">Koleksi</a>
+
+                <a href="javascript:void(0)" id="admin-link" onclick="showPage('admin-dashboard')" class="hidden text-sm font-bold text-yellow-400">
+                    <i class="fas fa-grid-2 mr-1"></i> Dashboard
+                </a>
+                <button id="logout-btn" onclick="logout()" class="hidden text-xs bg-red-500/20 text-red-500 px-3 py-1 rounded border border-red-500/30">
+                    Keluar
+                </button>
+            </div>
+
+            <!-- Hamburger Button (Mobile) -->
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-btn" class="text-white text-2xl focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="mobile-nav-overlay">
+            <div class="mobile-nav-content">
+                <button id="close-mobile-menu">
+                    <i class="fas fa-times"></i>
+                </button>
+                <a href="javascript:void(0)" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400">Beranda</a>
+                <a href="#katalog-section" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400">Koleksi</a>
+                <a href="javascript:void(0)" id="admin-link-mobile" onclick="closeAndShowPage('admin-dashboard')" class="hidden text-yellow-400">Dashboard</a>
+                <button id="logout-btn-mobile" onclick="logout(); toggleMobileMenu();" class="hidden text-red-500">Keluar</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============================================= -->
+    <!--   KONTEN UTAMA                                -->
+    <!-- ============================================= -->
+    <main class="pt-20 pb-20 px-6">
+        <div class="max-w-7xl mx-auto">
+
+            <!-- ===== PAGE: BERANDA ===== -->
+            <div id="main-view" class="spa-content active">
+
+                <!-- Hero -->
+                <section class="hero-section">
+                    <h1 class="hero-title">
+                        Membaca adalah <br>
+                        <span class="neon-text">Jendela Dunia</span>
+                    </h1>
+                    <p class="hero-subtitle">selamat datang di web koleksi buku digital terpercaya.</p>
+                </section>
+
+                <!-- Header Katalog + Search -->
+                <header id="katalog-section" class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-t border-white/5 pt-12">
+                    <div>
+                        <h2 class="text-3xl font-bold">Koleksi <span class="neon-text">Buku</span></h2>
+                        <p class="text-gray-500 text-sm mt-1">Klik pada buku untuk mulai membaca tanpa download.</p>
+                    </div>
+                    <div class="relative w-full md:w-80">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"></i>
+                        <input type="text" id="search-input" placeholder="Cari literatur..."
+                            class="w-full bg-[#161616] border border-white/5 rounded-xl py-3 pl-12 pr-4 focus:border-cyan-500 outline-none transition text-sm">
+                    </div>
+                </header>
+
+                <!-- Grid Buku -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="book-grid">
+                    <!-- Buku di-render oleh script.js -->
+                </div>
+
+                <!-- PRESERVATION FOOTER -->
+                <div class="preservation-container">
+                    <div class="preservation-title">
+                        <div class="w-7 h-7 bg-cyan-500 rounded flex items-center justify-center text-black text-[11px]">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <span class="uppercase">PERPUSTAKAAN <span class="neon-text">DELPIK</span></span>
+                    </div>
+                    <p class="preservation-subtext">Koleksi Digital Publik V2.1</p>
+                </div>
+
+            </div>
+
+            <!-- ===== PAGE: LOGIN ===== -->
+            <div id="login" class="spa-content">
+                <div class="max-w-md mx-auto mt-20 bg-[#161616] p-10 rounded-2xl border border-white/5 text-center shadow-2xl">
+                    <h2 class="text-3xl font-bold mb-2">Panel <span class="neon-text">Admin</span></h2>
+                    <p class="text-gray-600 text-xs mb-8">Masuk dengan akun administrator Anda.</p>
+
+                    <form id="login-form" class="text-left space-y-4">
+                        <input type="email" id="email" required placeholder="admin@perpus.id"
+                            class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none focus:border-cyan-500 text-sm"
+                            value="admin@perpus.id">
+                        <input type="password" id="password" required placeholder="••••••"
+                            class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none focus:border-cyan-500 text-sm"
+                            value="654321">
+                        <button type="submit" class="w-full bg-cyan-500 text-black font-bold py-4 rounded-xl hover:bg-cyan-400 transition">
+                            MASUK
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== PAGE: ADMIN DASHBOARD ===== -->
+            <div id="admin-dashboard" class="spa-content">
+                <div class="flex justify-between items-center mb-10 pt-10">
+                    <h2 class="text-3xl font-bold">Panel <span class="neon-text">Manajer</span></h2>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                    <!-- Form Tambah Buku -->
+                    <div class="lg:col-span-4">
+                        <div class="bg-[#161616] p-6 rounded-2xl border border-white/5 sticky top-28">
+                            <h3 class="font-bold mb-6 flex items-center text-cyan-400">
+                                <i class="fas fa-plus-circle mr-2"></i> Tambah Buku
+                            </h3>
+                            <form id="add-book-form" class="space-y-4">
+                                <input type="text" id="add-title" placeholder="Judul Buku" required
+                                    class="w-full bg-black border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-cyan-500">
+                                <input type="text" id="add-author" placeholder="Nama Penulis" required
+                                    class="w-full bg-black border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-cyan-500">
+
+                                <!-- Upload PDF -->
+                                <div class="upload-box" onclick="document.getElementById('pdf-input').click()">
+                                    <i class="fas fa-file-pdf text-2xl text-red-500 mb-1"></i>
+                                    <p id="pdf-label" class="text-[10px] text-gray-500">Unggah File PDF</p>
+                                    <input type="file" id="pdf-input" class="hidden" accept=".pdf"
+                                        onchange="handleFileChange(this, 'pdf-label')">
+                                </div>
+
+                                <!-- Upload Cover -->
+                                <div class="upload-box" onclick="document.getElementById('cover-input').click()">
+                                    <i class="fas fa-image text-2xl text-green-500 mb-1"></i>
+                                    <p id="cover-label" class="text-[10px] text-gray-500">Unggah Gambar Sampul</p>
+                                    <input type="file" id="cover-input" class="hidden" accept="image/*"
+                                        onchange="handleFileChange(this, 'cover-label')">
+                                </div>
+
+                                <button type="submit" id="save-btn"
+                                    class="w-full bg-cyan-500 text-black font-bold py-3 rounded-lg text-sm hover:bg-cyan-400 transition">
+                                    SIMPAN KOLEKSI
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Daftar Buku -->
+                    <div class="lg:col-span-8">
+                        <div class="bg-[#161616] rounded-2xl overflow-hidden border border-white/5">
+                            <table class="w-full admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Buku</th>
+                                        <th>Penulis</th>
+                                        <th class="text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-book-list">
+                                    <!-- Di-render oleh script.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ============================================= -->
+    <!--   DEPENDENCIES (order matters)                -->
+    <!-- ============================================= -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+
+</body>
+</html>
