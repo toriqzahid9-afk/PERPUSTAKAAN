@@ -11,7 +11,7 @@ let books = [];
 let isAdmin = false;
 let tempFiles = { pdf: null, cover: null };
 // =============================================
-//   DATABASE (Local Server API)
+//   DATABASE (PHP Server API)
 // =============================================
 async function initDB() {
     loadBooksFromDB();
@@ -19,7 +19,7 @@ async function initDB() {
 
 async function loadBooksFromDB() {
     try {
-        const response = await fetch('/api/books');
+        const response = await fetch('api.php');
         books = await response.json();
         render();
     } catch (e) {
@@ -195,7 +195,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
             formData.append('cover', tempFiles.cover);
         }
 
-        const response = await fetch('/api/books', {
+        const response = await fetch('api.php', {
             method: 'POST',
             body: formData
         });
@@ -232,7 +232,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 async function deleteBook(id) {
     if (!confirm('Hapus buku ini secara permanen dari server?')) return;
     try {
-        const response = await fetch('/api/books/' + id, { method: 'DELETE' });
+        const response = await fetch('api.php?action=delete&id=' + id, { method: 'DELETE' });
         const result = await response.json();
         
         if (result.success) {
