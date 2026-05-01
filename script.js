@@ -244,18 +244,25 @@ function handleLogoClick() {
 
 document.getElementById('login-form').onsubmit = (e) => {
     e.preventDefault();
-    isAdmin = true;
-    
-    // Update Desktop UI
-    document.getElementById('admin-link').classList.remove('hidden');
-    document.getElementById('logout-btn').classList.remove('hidden');
-    
-    // Update Mobile UI
-    document.getElementById('admin-link-mobile')?.classList.remove('hidden');
-    document.getElementById('logout-btn-mobile')?.classList.remove('hidden');
-    
-    showPage('admin-dashboard');
-    render();
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('password').value;
+
+    if (email === 'admin@perpus.id' && pass === '654321') {
+        isAdmin = true;
+        
+        // Update Desktop UI
+        document.getElementById('admin-link').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+        
+        // Update Mobile UI
+        document.getElementById('admin-link-mobile')?.classList.remove('hidden');
+        document.getElementById('logout-btn-mobile')?.classList.remove('hidden');
+        
+        showPage('admin-dashboard');
+        render();
+    } else {
+        alert('Email atau Password salah!');
+    }
 };
 
 function logout() {
