@@ -31,17 +31,19 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Dim backdrop */
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.7); /* Darker backdrop */
+    backdrop-filter: blur(8px);
     z-index: 1000;
-    display: none;
+    visibility: hidden; /* Use visibility for transitions */
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: all 0.4s ease;
+    pointer-events: none;
 }
 
 .mobile-nav-overlay.active {
-    display: block;
+    visibility: visible;
     opacity: 1;
+    pointer-events: auto;
 }
 
 .mobile-nav-content {
@@ -155,26 +157,36 @@ body {
         flex-direction: column;
         align-items: center;
         text-align: center;
-        padding: 8px; /* Padding lebih kecil */
-        gap: 5px;
+        padding: 10px;
+        gap: 8px;
     }
 
     .book-cover-container {
-        width: 100%; /* Lebar penuh grid cell */
-        height: 120px; /* Tinggi disesuaikan */
-        margin-bottom: 8px;
+        width: 100%;
+        height: 180px; /* Taller cover on 2-column grid */
+        margin-bottom: 5px;
     }
 
     .book-card h4 {
-        font-size: 8px !important; /* Font judul sangat kecil */
+        font-size: 10px !important; 
+        line-height: 1.2;
     }
 
     .book-card p {
-        font-size: 6px !important; /* Font penulis sangat kecil */
+        font-size: 8px !important;
     }
 
-    .book-card .font-bold.tracking-widest {
-        display: none; /* Sembunyikan "KLIK UNTUK MEMBACA" di HP agar tidak penuh */
+    /* Membesarkan tombol menu agar mudah diklik */
+    #mobile-menu-btn {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
 }
 
@@ -189,6 +201,7 @@ body {
     padding: 12px;
     gap: 15px;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .book-card:hover {
