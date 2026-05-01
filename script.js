@@ -11,19 +11,45 @@ let books = [];
 let isAdmin = false;
 let tempFiles = { pdf: null, cover: null };
 // =============================================
-//   DATABASE (PHP Server API)
+//   FIREBASE CONFIGURATION
+// =============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBV_wDXwj4OWplfjeFdkgW_91T60t2aXTY",
+  authDomain: "perpustakaandigital-46861.firebaseapp.com",
+  projectId: "perpustakaandigital-46861",
+  storageBucket: "perpustakaandigital-46861.firebasestorage.app",
+  messagingSenderId: "884650687443",
+  appId: "1:884650687443:web:2c757bde39908cc7524d26",
+  measurementId: "G-LCWNRT59KT"
+};
+
+let dbFirebase, storageFirebase;
+try {
+    firebase.initializeApp(firebaseConfig);
+    dbFirebase = firebase.firestore();
+    storageFirebase = firebase.storage();
+} catch (e) {
+    console.warn("Firebase belum dikonfigurasi.", e);
+}
+
+// =============================================
+//   DATABASE (Firebase)
 // =============================================
 async function initDB() {
+    if (!dbFirebase) {
+        console.warn("Harap masukkan Konfigurasi Firebase di script.js");
+        return;
+    }
     loadBooksFromDB();
 }
 
 async function loadBooksFromDB() {
     try {
-        const response = await fetch('api.php');
-        books = await response.json();
+        const snapshot = await dbFirebase.collection('books').orderBy('createdAt', 'desc').get();
+        books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     } catch (e) {
-        console.error("Gagal memuat buku dari Server:", e);
+        console.error("Gagal memuat buku dari Firebase:", e);
     }
 }
 
@@ -179,6 +205,13 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         saveBtn.innerText = 'MENGUNGGAH...';
         saveBtn.disabled = true;
 
+        if (!dbFirebase) {
+            alert("Firebase belum dikonfigurasi! Harap edit file script.js terlebih dahulu.");
+            saveBtn.innerText = originalText;
+            saveBtn.disabled = false;
+            return;
+        }
+
         if (!tempFiles.pdf || !tempFiles.pdf.blob) {
             alert('Pilih file PDF terlebih dahulu!');
             saveBtn.innerText = originalText;
@@ -186,44 +219,50 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('title', document.getElementById('add-title').value);
-        formData.append('author', document.getElementById('add-author').value);
-        formData.append('pdf', tempFiles.pdf.blob);
-        
+        // 1. Upload PDF ke Firebase Storage
+        const pdfFile = tempFiles.pdf.blob;
+        const pdfRef = storageFirebase.ref(`books/pdf_${Date.now()}_${pdfFile.name}`);
+        await pdfRef.put(pdfFile);
+        const pdfUrl = await pdfRef.getDownloadURL();
+
+        // 2. Upload Cover ke Firebase Storage (jika ada)
+        let coverUrl = null;
         if (tempFiles.cover) {
-            formData.append('cover', tempFiles.cover);
+            const coverFile = tempFiles.cover;
+            const coverRef = storageFirebase.ref(`covers/cover_${Date.now()}_${coverFile.name}`);
+            await coverRef.put(coverFile);
+            coverUrl = await coverRef.getDownloadURL();
         }
 
-        const response = await fetch('api.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            books.unshift(result.book);
-            render();
-            e.target.reset();
+        // 3. Simpan Metadata ke Firestore
+        const newBook = {
+            title: document.getElementById('add-title').value,
+            author: document.getElementById('add-author').value,
+            pdfUrl: pdfUrl,
+            coverUrl: coverUrl,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-            document.getElementById('pdf-label').textContent = 'Unggah File PDF';
-            document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
-            document.getElementById('pdf-label').classList.remove('text-cyan-400');
-            document.getElementById('cover-label').classList.remove('text-cyan-400');
-            tempFiles = { pdf: null, cover: null };
+        const docRef = await dbFirebase.collection('books').add(newBook);
+        newBook.id = docRef.id;
 
-            alert('Buku Berhasil Diunggah dan Tersimpan di Server!');
-        } else {
-            alert('Gagal menyimpan buku ke server.');
-        }
+        books.unshift(newBook);
+        render();
+        e.target.reset();
 
+        document.getElementById('pdf-label').textContent = 'Unggah File PDF';
+        document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
+        document.getElementById('pdf-label').classList.remove('text-cyan-400');
+        document.getElementById('cover-label').classList.remove('text-cyan-400');
+        tempFiles = { pdf: null, cover: null };
+
+        alert('Buku Berhasil Diunggah dan Tersimpan Online!');
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
 
     } catch (err) {
         console.error('Error saat menyimpan:', err);
-        alert('Gagal menyimpan buku! Pastikan server berjalan.');
+        alert('Gagal menyimpan buku! Pastikan Firebase sudah dikonfigurasi dengan benar.');
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
@@ -232,15 +271,9 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 async function deleteBook(id) {
     if (!confirm('Hapus buku ini secara permanen dari server?')) return;
     try {
-        const response = await fetch('api.php?action=delete&id=' + id, { method: 'DELETE' });
-        const result = await response.json();
-        
-        if (result.success) {
-            books = books.filter(b => b.id !== id);
-            render();
-        } else {
-            alert('Gagal menghapus buku dari server.');
-        }
+        await dbFirebase.collection('books').doc(id).delete();
+        books = books.filter(b => b.id !== id);
+        render();
     } catch (err) {
         console.error("Gagal menghapus:", err);
         alert("Gagal menghapus buku!");
