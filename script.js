@@ -271,10 +271,12 @@ document.getElementById('login-form').onsubmit = (e) => {
         // Update Desktop UI
         document.getElementById('admin-link').classList.remove('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
+        document.getElementById('login-link').classList.add('hidden');
         
         // Update Mobile UI
         document.getElementById('admin-link-mobile')?.classList.remove('hidden');
         document.getElementById('logout-btn-mobile')?.classList.remove('hidden');
+        document.getElementById('login-link-mobile')?.classList.add('hidden');
         
         showPage('admin-dashboard');
         render();
@@ -289,10 +291,12 @@ function logout() {
     // Update Desktop UI
     document.getElementById('admin-link').classList.add('hidden');
     document.getElementById('logout-btn').classList.add('hidden');
+    document.getElementById('login-link').classList.remove('hidden');
     
     // Update Mobile UI
     document.getElementById('admin-link-mobile')?.classList.add('hidden');
     document.getElementById('logout-btn-mobile')?.classList.add('hidden');
+    document.getElementById('login-link-mobile')?.classList.remove('hidden');
     
     showPage('main-view');
 }
@@ -318,21 +322,22 @@ function closeAndShowPage(pageId) {
     }
 }
 
-document.getElementById('mobile-menu-btn').addEventListener('click', toggleMobileMenu);
-document.getElementById('close-mobile-menu').addEventListener('click', toggleMobileMenu);
-
-// Tutup menu jika klik di area backdrop (luar drawer)
-document.getElementById('mobile-menu').addEventListener('click', function(e) {
-    if (e.target === this) {
-        toggleMobileMenu();
-    }
-});
-
 // =============================================
 //   INISIALISASI
 // =============================================
-window.onload = () => {
+document.addEventListener('DOMContentLoaded', () => {
     initDB();
+
+    // Event Listeners
+    document.getElementById('mobile-menu-btn').addEventListener('click', toggleMobileMenu);
+    document.getElementById('close-mobile-menu').addEventListener('click', toggleMobileMenu);
+
+    // Tutup menu jika klik di area backdrop (luar drawer)
+    document.getElementById('mobile-menu').addEventListener('click', function(e) {
+        if (e.target === this) {
+            toggleMobileMenu();
+        }
+    });
     
     // Pastikan mobile menu tertutup saat resize ke desktop
     window.addEventListener('resize', () => {
@@ -340,4 +345,4 @@ window.onload = () => {
             document.getElementById('mobile-menu').classList.remove('active');
         }
     });
-};
+});

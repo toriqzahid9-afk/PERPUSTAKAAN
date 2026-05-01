@@ -70,6 +70,8 @@
                 <a href="javascript:void(0)" onclick="showPage('main-view')" class="text-sm font-medium hover:text-cyan-400 transition">Beranda</a>
                 <a href="#katalog-section" onclick="showPage('main-view')" class="text-sm font-medium hover:text-cyan-400 transition">Koleksi</a>
 
+                <a href="javascript:void(0)" id="login-link" onclick="showPage('login')" class="text-sm font-medium hover:text-cyan-400 transition">Masuk</a>
+
                 <a href="javascript:void(0)" id="admin-link" onclick="showPage('admin-dashboard')" class="hidden text-sm font-bold text-yellow-400">
                     <i class="fas fa-grid-2 mr-1"></i> Dashboard
                 </a>
@@ -80,7 +82,7 @@
 
             <!-- Hamburger Button (Mobile) -->
             <div class="md:hidden flex items-center">
-                <button id="mobile-menu-btn" class="text-white text-2xl focus:outline-none">
+                <button id="mobile-menu-btn" class="text-white text-2xl p-2 focus:outline-none">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
@@ -93,6 +95,9 @@
                 </button>
                 <a href="javascript:void(0)" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400">Beranda</a>
                 <a href="#katalog-section" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400">Koleksi</a>
+                
+                <a href="javascript:void(0)" id="login-link-mobile" onclick="closeAndShowPage('login')" class="text-white hover:text-cyan-400">Masuk</a>
+
                 <a href="javascript:void(0)" id="admin-link-mobile" onclick="closeAndShowPage('admin-dashboard')" class="hidden text-yellow-400">Dashboard</a>
                 <button id="logout-btn-mobile" onclick="logout(); toggleMobileMenu();" class="hidden text-red-500">Keluar</button>
             </div>
