@@ -10,37 +10,21 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 let books = [];
 let isAdmin = false;
 let tempFiles = { pdf: null, cover: null };
-let db;
-
 // =============================================
-//   DATABASE (IndexedDB)
+//   DATABASE (Local Server API)
 // =============================================
-
 async function initDB() {
-    return new Promise((resolve) => {
-        const request = indexedDB.open('DelpikFlipbookDB', 1);
-
-        request.onupgradeneeded = (e) => {
-            e.target.result.createObjectStore('books', { keyPath: 'id' });
-        };
-
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            loadBooksFromDB().then(resolve);
-        };
-    });
+    loadBooksFromDB();
 }
 
 async function loadBooksFromDB() {
-    return new Promise((resolve) => {
-        const store = db.transaction(['books'], 'readonly').objectStore('books');
-        const request = store.getAll();
-        request.onsuccess = () => {
-            books = request.result || [];
-            render();
-            resolve();
-        };
-    });
+    try {
+        const response = await fetch('/api/books');
+        books = await response.json();
+        render();
+    } catch (e) {
+        console.error("Gagal memuat buku dari Server:", e);
+    }
 }
 
 // =============================================
@@ -68,18 +52,11 @@ async function openBook(id) {
             throw new Error('Library PDF.js belum dimuat. Periksa koneksi internet Anda.');
         }
 
-        // Cek data PDF
-        if (!book.pdf) throw new Error('Data PDF tidak ditemukan pada objek buku.');
+        // Karena sudah online, PDF bisa langsung dimuat dari URL
+        if (!book.pdfUrl) throw new Error('URL PDF tidak ditemukan pada objek buku.');
 
-        // Ambil blob (bisa di book.pdf.blob atau langsung di book.pdf)
-        const pdfBlob = book.pdf.blob || book.pdf;
-
-        if (!(pdfBlob instanceof Blob)) {
-            throw new Error('Data PDF bukan merupakan Blob/File yang valid.');
-        }
-
-        const pdfData = await pdfBlob.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        // Muat dari Firebase Storage URL
+        const pdf = await pdfjsLib.getDocument(book.pdfUrl).promise;
 
         console.log('PDF berhasil dimuat. Jumlah halaman:', pdf.numPages);
 
@@ -195,41 +172,79 @@ function handleFileChange(input, labelId) {
 document.getElementById('add-book-form').onsubmit = async (e) => {
     e.preventDefault();
 
-    const newBook = {
-        id: Date.now(),
-        title: document.getElementById('add-title').value,
-        author: document.getElementById('add-author').value,
-        pdf: tempFiles.pdf,
-        cover: tempFiles.cover || null
-    };
+    const saveBtn = document.getElementById('save-btn');
+    const originalText = saveBtn.innerText;
 
-    const tx = db.transaction(['books'], 'readwrite');
-    tx.objectStore('books').add(newBook);
+    try {
+        saveBtn.innerText = 'MENGUNGGAH...';
+        saveBtn.disabled = true;
 
-    tx.oncomplete = () => {
-        books.unshift(newBook);
-        render();
-        e.target.reset();
+        if (!tempFiles.pdf || !tempFiles.pdf.blob) {
+            alert('Pilih file PDF terlebih dahulu!');
+            saveBtn.innerText = originalText;
+            saveBtn.disabled = false;
+            return;
+        }
 
-        // Reset label upload
-        document.getElementById('pdf-label').textContent = 'Unggah File PDF';
-        document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
-        document.getElementById('pdf-label').classList.remove('text-cyan-400');
-        document.getElementById('cover-label').classList.remove('text-cyan-400');
-        tempFiles = { pdf: null, cover: null };
+        const formData = new FormData();
+        formData.append('title', document.getElementById('add-title').value);
+        formData.append('author', document.getElementById('add-author').value);
+        formData.append('pdf', tempFiles.pdf.blob);
+        
+        if (tempFiles.cover) {
+            formData.append('cover', tempFiles.cover);
+        }
 
-        alert('Buku Berhasil Ditambahkan!');
-    };
+        const response = await fetch('/api/books', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            books.unshift(result.book);
+            render();
+            e.target.reset();
+
+            document.getElementById('pdf-label').textContent = 'Unggah File PDF';
+            document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
+            document.getElementById('pdf-label').classList.remove('text-cyan-400');
+            document.getElementById('cover-label').classList.remove('text-cyan-400');
+            tempFiles = { pdf: null, cover: null };
+
+            alert('Buku Berhasil Diunggah dan Tersimpan di Server!');
+        } else {
+            alert('Gagal menyimpan buku ke server.');
+        }
+
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+
+    } catch (err) {
+        console.error('Error saat menyimpan:', err);
+        alert('Gagal menyimpan buku! Pastikan server berjalan.');
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+    }
 };
 
-function deleteBook(id) {
-    if (!confirm('Hapus buku ini?')) return;
-    const tx = db.transaction(['books'], 'readwrite');
-    tx.objectStore('books').delete(id);
-    tx.oncomplete = () => {
-        books = books.filter(b => b.id !== id);
-        render();
-    };
+async function deleteBook(id) {
+    if (!confirm('Hapus buku ini secara permanen dari server?')) return;
+    try {
+        const response = await fetch('/api/books/' + id, { method: 'DELETE' });
+        const result = await response.json();
+        
+        if (result.success) {
+            books = books.filter(b => b.id !== id);
+            render();
+        } else {
+            alert('Gagal menghapus buku dari server.');
+        }
+    } catch (err) {
+        console.error("Gagal menghapus:", err);
+        alert("Gagal menghapus buku!");
+    }
 }
 
 // =============================================
@@ -240,13 +255,16 @@ function render() {
     const grid = document.getElementById('book-grid');
     const list = document.getElementById('admin-book-list');
 
+    const getCoverUrl = (coverUrl) => {
+        if (!coverUrl) return 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK';
+        return coverUrl;
+    };
+
     // --- Render kartu buku di halaman utama ---
     grid.innerHTML = books.map(b => `
-        <div class="book-card" onclick="openBook(${b.id})">
+        <div class="book-card" onclick="openBook('${b.id}')">
             <div class="book-cover-container">
-                <img src="${b.cover
-            ? URL.createObjectURL(b.cover)
-            : 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK'}"
+                <img src="${getCoverUrl(b.coverUrl)}"
                      alt="Sampul ${b.title}">
             </div>
             <div class="flex flex-col justify-between py-2">
@@ -265,7 +283,7 @@ function render() {
             <td class="text-xs font-bold uppercase">${b.title}</td>
             <td class="text-[10px] text-gray-500">${b.author}</td>
             <td class="text-right">
-                <button onclick="deleteBook(${b.id})" class="text-red-500/50 hover:text-red-500">
+                <button onclick="deleteBook('${b.id}')" class="text-red-500/50 hover:text-red-500">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
