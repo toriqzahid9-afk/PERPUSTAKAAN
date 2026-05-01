@@ -51,18 +51,18 @@ async function openBook(id) {
     const book = books.find(b => b.id === id);
     if (!book) return;
 
-    const overlay  = document.getElementById('reader-overlay');
+    const overlay = document.getElementById('reader-overlay');
     const flipbook = document.getElementById('flipbook');
-    const spinner  = document.getElementById('loading-spinner');
+    const spinner = document.getElementById('loading-spinner');
 
     overlay.style.display = 'flex';
     spinner.style.display = 'flex';
     try {
         console.log('Mencoba memuat buku:', book.title);
-        
+
         // Hancurkan instance turn.js sebelumnya jika ada
-        try { $(flipbook).turn('destroy'); } catch(e) {}
-        flipbook.innerHTML = ''; 
+        try { $(flipbook).turn('destroy'); } catch (e) { }
+        flipbook.innerHTML = '';
 
         if (typeof pdfjsLib === 'undefined') {
             throw new Error('Library PDF.js belum dimuat. Periksa koneksi internet Anda.');
@@ -70,16 +70,16 @@ async function openBook(id) {
 
         // Cek data PDF
         if (!book.pdf) throw new Error('Data PDF tidak ditemukan pada objek buku.');
-        
+
         // Ambil blob (bisa di book.pdf.blob atau langsung di book.pdf)
         const pdfBlob = book.pdf.blob || book.pdf;
-        
+
         if (!(pdfBlob instanceof Blob)) {
             throw new Error('Data PDF bukan merupakan Blob/File yang valid.');
         }
 
         const pdfData = await pdfBlob.arrayBuffer();
-        const pdf     = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
 
         console.log('PDF berhasil dimuat. Jumlah halaman:', pdf.numPages);
 
@@ -93,7 +93,7 @@ async function openBook(id) {
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             await page.render({ canvasContext: context, viewport: viewport }).promise;
-            
+
             const pageDiv = document.createElement('div');
             pageDiv.className = 'flipbook-page';
             pageDiv.appendChild(canvas);
@@ -112,7 +112,7 @@ async function openBook(id) {
 
         // Inisialisasi Turn.js segera setelah halaman awal siap
         const isMobile = window.innerWidth < 768;
-        
+
         // Kurangi ukuran buku agar menyisakan ruang untuk sampul (cover & spine)
         // Cover padding & border takes up roughly ~40px horizontally and ~20px vertically
         const bookWidth = Math.floor(isMobile ? (window.innerWidth - 40) : (window.innerWidth > 1000 ? 960 : window.innerWidth * 0.85));
@@ -129,7 +129,7 @@ async function openBook(id) {
             duration: 800,
             pages: pdf.numPages, // Beritahu turn.js total halaman sebenarnya
             when: {
-                turning: function(e, page) {
+                turning: function (e, page) {
                     const pageNum = document.getElementById('page-number');
                     if (pageNum) pageNum.innerText = `Hal. ${page}`;
                 }
@@ -145,10 +145,10 @@ async function openBook(id) {
                 try {
                     // Cek apakah reader masih terbuka sebelum lanjut render
                     if (document.getElementById('reader-overlay').style.display === 'none') break;
-                    
+
                     const pageDiv = await renderPage(i);
                     $(flipbook).turn('addPage', pageDiv, i);
-                    
+
                     // Beri jeda kecil agar browser tetap responsif
                     await new Promise(r => setTimeout(r, 50));
                 } catch (bgErr) {
@@ -197,10 +197,10 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 
     const newBook = {
         id: Date.now(),
-        title:  document.getElementById('add-title').value,
+        title: document.getElementById('add-title').value,
         author: document.getElementById('add-author').value,
-        pdf:    tempFiles.pdf,
-        cover:  tempFiles.cover || null
+        pdf: tempFiles.pdf,
+        cover: tempFiles.cover || null
     };
 
     const tx = db.transaction(['books'], 'readwrite');
@@ -212,7 +212,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         e.target.reset();
 
         // Reset label upload
-        document.getElementById('pdf-label').textContent   = 'Unggah File PDF';
+        document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
         document.getElementById('pdf-label').classList.remove('text-cyan-400');
         document.getElementById('cover-label').classList.remove('text-cyan-400');
@@ -245,8 +245,8 @@ function render() {
         <div class="book-card" onclick="openBook(${b.id})">
             <div class="book-cover-container">
                 <img src="${b.cover
-                    ? URL.createObjectURL(b.cover)
-                    : 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK'}"
+            ? URL.createObjectURL(b.cover)
+            : 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK'}"
                      alt="Sampul ${b.title}">
             </div>
             <div class="flex flex-col justify-between py-2">
@@ -322,13 +322,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // -- Mobile Menu --
     const mobileBtn = document.getElementById('mobile-menu-btn');
-    const closeBtn  = document.getElementById('close-mobile-menu');
+    const closeBtn = document.getElementById('close-mobile-menu');
     const mobileMenu = document.getElementById('mobile-menu');
 
     if (mobileBtn) mobileBtn.addEventListener('click', toggleMobileMenu);
     if (closeBtn) closeBtn.addEventListener('click', toggleMobileMenu);
     if (mobileMenu) {
-        mobileMenu.addEventListener('click', function(e) {
+        mobileMenu.addEventListener('click', function (e) {
             if (e.target === this) toggleMobileMenu();
         });
     }
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const query = this.value.toLowerCase().trim();
             const cards = document.querySelectorAll('#book-grid .book-card');
             cards.forEach(card => {
-                const title  = card.querySelector('h4').textContent.toLowerCase();
+                const title = card.querySelector('h4').textContent.toLowerCase();
                 const author = card.querySelector('p').textContent.toLowerCase();
                 card.style.display = (title.includes(query) || author.includes(query)) ? '' : 'none';
             });

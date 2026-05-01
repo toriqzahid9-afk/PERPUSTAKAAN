@@ -221,7 +221,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: radial-gradient(circle, #1a1a1a 0%, #000 100%); /* Depth background */
     z-index: 9999;
     flex-direction: column;
     align-items: center;
@@ -229,28 +229,117 @@ body {
 }
 
 #flipbook-container {
-    width: 90vw;
-    height: 80vh;
+    width: 95vw;
+    height: 85vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    perspective: 3000px; /* Stronger 3D */
+}
+
+/* REALISTIC HARDCOVER (LEATHER) */
+.book-body {
+    position: relative;
+    padding: 15px 20px 15px 35px; /* Spacing for thick spine */
+    background: #3d2b1f; /* Brighter Leather Brown */
+    border-radius: 10px 25px 25px 10px;
+    box-shadow: 
+        0 50px 100px rgba(0,0,0,0.9), 
+        inset -10px 0 30px rgba(0,0,0,0.4),
+        inset 5px 0 10px rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-left: 18px solid #1a110a; /* Thick Spine Binding */
+    transform: rotateX(2deg) rotateY(-1deg); /* Slight 3D Tilt */
+    transition: 0.5s ease;
+}
+
+@media (max-width: 768px) {
+    #flipbook-container {
+        width: 100vw;
+        height: 90vh;
+        padding: 10px;
+    }
+    .book-body {
+        padding: 5px 8px 5px 12px; /* Jilidan lebih proporsional */
+        border-left: 12px solid #1a110a; /* Jilidan tebal */
+        border-radius: 6px 12px 12px 6px;
+        transform: scale(1); /* Hilangkan scale agar lebih tajam, ukuran sudah diatur di script.js */
+        background: #3d2b1f; /* Pastikan warna cover tetap ada */
+    }
+    
+    /* Pada mode single (HP), spine selalu di kiri */
+    #flipbook .turn-page, #flipbook .odd, #flipbook .even {
+        border-radius: 2px 12px 12px 2px !important;
+    }
+    
+    /* Pindahkan shadow spine ke kiri untuk semua halaman di HP */
+    #flipbook .odd:before, #flipbook .even:before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 30px;
+        background: linear-gradient(to right, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 100%);
+        z-index: 10;
+    }
+    #flipbook .even:after {
+        display: none !important; /* Hilangkan shadow kanan di mode single */
+    }
 }
 
 #flipbook {
     width: 100%;
     height: 100%;
+    overflow: visible !important; 
+}
+
+/* PAPER PAGES INSIDE TURN.JS */
+#flipbook .turn-page {
+    background-color: #fff !important;
+    border-radius: 0 12px 12px 0 !important;
+    box-shadow: 0 0 25px rgba(0,0,0,0.4) !important;
+}
+
+#flipbook .even {
+    border-radius: 12px 0 0 12px !important;
+}
+
+#flipbook .odd {
+    border-radius: 0 12px 12px 0 !important;
+}
+
+/* Spine Shadow (Deep Fold) */
+#flipbook .odd:before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 100%);
+    z-index: 10;
+}
+
+#flipbook .even:after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 40px;
+    background: linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 100%);
+    z-index: 10;
 }
 
 .flipbook-page {
-    background: white;
+    background: #fff !important;
     width: 100%;
     height: 100%;
+    overflow: hidden !important;
 }
 
 .flipbook-page canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    padding: 35px !important; /* Premium White Margin */
 }
 
 .reader-controls {
