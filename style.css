@@ -87,12 +87,21 @@ body {
 
 #close-mobile-menu {
     position: absolute;
-    top: 25px;
-    right: 25px;
-    font-size: 24px;
+    top: 15px;
+    right: 15px;
+    font-size: 30px;
     color: #00f2ff;
-    background: none;
+    background: rgba(255, 255, 255, 0.05);
     border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2100;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* --- SPA PAGE TRANSITIONS --- */

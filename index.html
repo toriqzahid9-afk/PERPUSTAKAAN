@@ -60,11 +60,11 @@
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
             <!-- Logo -->
-            <div onclick="handleLogoClick()" class="flex items-center space-x-3 cursor-pointer group">
-                <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center text-black shadow-lg shadow-cyan-500/20 group-hover:rotate-12 transition">
+            <div onclick="handleLogoClick(); if(window.innerWidth < 768) toggleMobileMenu();" class="flex items-center space-x-3 cursor-pointer group z-[60]">
+                <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center text-black shadow-lg shadow-cyan-500/20 group-hover:rotate-12 transition pointer-events-none">
                     <i class="fas fa-book-open text-xl"></i>
                 </div>
-                <span class="text-xl font-bold tracking-tighter">DELPIK <span class="neon-text">DIGITAL</span></span>
+                <span class="text-xl font-bold tracking-tighter pointer-events-none">DELPIK <span class="neon-text">DIGITAL</span></span>
             </div>
 
             <!-- Menu (Desktop) -->
@@ -92,16 +92,16 @@
 
         <div id="mobile-menu" class="mobile-nav-overlay">
             <div class="mobile-nav-content">
-                <button id="close-mobile-menu">
-                    <i class="fas fa-times"></i>
+                <button id="close-mobile-menu" onclick="toggleMobileMenu()" class="absolute top-4 right-4 text-cyan-400 text-3xl p-6 cursor-pointer z-[2000]">
+                    <i class="fas fa-times pointer-events-none"></i>
                 </button>
-                <a href="javascript:void(0)" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400">Beranda</a>
-                <a href="#katalog-section" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400">Koleksi</a>
+                <a href="javascript:void(0)" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400 text-lg font-bold py-2">BERANDA</a>
+                <a href="#katalog-section" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400 text-lg font-bold py-2">KOLEKSI</a>
                 
-                <a href="javascript:void(0)" id="login-link-mobile" onclick="closeAndShowPage('login')" class="text-white hover:text-cyan-400">Masuk</a>
+                <a href="javascript:void(0)" id="login-link-mobile" onclick="closeAndShowPage('login')" class="text-white hover:text-cyan-400 text-lg font-bold py-2">MASUK</a>
 
-                <a href="javascript:void(0)" id="admin-link-mobile" onclick="closeAndShowPage('admin-dashboard')" class="hidden text-yellow-400">Dashboard</a>
-                <button id="logout-btn-mobile" onclick="logout(); toggleMobileMenu();" class="hidden text-red-500">Keluar</button>
+                <a href="javascript:void(0)" id="admin-link-mobile" onclick="closeAndShowPage('admin-dashboard')" class="hidden text-yellow-400 text-lg font-bold py-2">DASHBOARD</a>
+                <button id="logout-btn-mobile" onclick="logout(); toggleMobileMenu();" class="hidden text-red-500 text-lg font-bold py-2">KELUAR</button>
             </div>
         </div>
     </nav>
