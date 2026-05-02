@@ -225,13 +225,36 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         const coverFile = tempFiles.cover;
         const timestamp = Date.now();
 
-        // 2. SIMPAN METADATA INSTAN (HANYA 1 DETIK)
+        // 2. PROSES KILAT: UPLOAD COVER DULU (BIAR FOTO LANGSUNG MUNCUL)
         saveBtn.disabled = true;
-        saveBtn.innerText = 'MENYIMPAN...';
+        saveBtn.innerText = 'MENYIMPAN FOTO...';
+        
+        let coverUrl = null;
+        if (coverFile) {
+            // Kompresi Gambar agar super cepat
+            const canvas = document.createElement('canvas');
+            const img = new Image();
+            img.src = URL.createObjectURL(coverFile);
+            const compressedBlob = await new Promise(res => {
+                img.onload = () => {
+                    const ctx = canvas.getContext('2d');
+                    const scale = 400 / img.width;
+                    canvas.width = 400; canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(res, 'image/jpeg', 0.7);
+                }
+            });
+            const coverRef = storageFirebase.ref(`covers/cover_${timestamp}.jpg`);
+            await coverRef.put(compressedBlob);
+            coverUrl = await coverRef.getDownloadURL();
+        }
 
+        // 3. SIMPAN METADATA (DENGAN COVER URL)
+        saveBtn.innerText = 'MENYIMPAN DATA...';
         const docRef = await dbFirebase.collection('books').add({
             title: title,
             author: author,
+            coverUrl: coverUrl, // FOTO LANGSUNG MASUK
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'ready' // Langsung set ready agar bisa dibaca di alat ini
         });
@@ -241,52 +264,29 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         // Simpan ke memori permanen HP agar bisa dibaca tanpa nunggu upload
         saveToLocalDisk(bookId, pdfFile);
 
-        alert('✅ BERHASIL! Buku sudah masuk koleksi. File asli sedang diupload di background.');
+        alert('✅ BERHASIL! Foto dan buku sudah masuk koleksi. File PDF sedang diproses di background.');
         
-        // RESET FORM SEGERA (Sesuai permintaan)
+        // RESET FORM SEGERA
         e.target.reset();
         document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
         const currentPdf = pdfFile; // Copy untuk background task
-        const currentCover = coverFile;
         tempFiles = { pdf: null, cover: null };
         saveBtn.disabled = false;
         saveBtn.innerText = originalText;
 
-        // 3. PROSES UPLOAD ASLI DI LATAR BELAKANG (BACKGROUND)
+        // 4. PROSES UPLOAD PDF ASLI DI LATAR BELAKANG (BACKGROUND)
         (async () => {
             try {
-                console.log('Background upload dimulai...');
+                console.log('Background upload PDF dimulai...');
                 const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
-                const pdfTask = pdfRef.put(currentPdf);
-                
-                let coverUrl = null;
-                if (currentCover) {
-                    const canvas = document.createElement('canvas');
-                    const img = new Image();
-                    img.src = URL.createObjectURL(currentCover);
-                    const compressedBlob = await new Promise(res => {
-                        img.onload = () => {
-                            const ctx = canvas.getContext('2d');
-                            const scale = 400 / img.width;
-                            canvas.width = 400; canvas.height = img.height * scale;
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            canvas.toBlob(res, 'image/jpeg', 0.7);
-                        }
-                    });
-                    const coverRef = storageFirebase.ref(`covers/cover_${bookId}.jpg`);
-                    await coverRef.put(compressedBlob);
-                    coverUrl = await coverRef.getDownloadURL();
-                }
-
-                await pdfTask;
+                await pdfRef.put(currentPdf);
                 const pdfUrl = await pdfRef.getDownloadURL();
 
                 await dbFirebase.collection('books').doc(bookId).update({
-                    pdfUrl: pdfUrl,
-                    coverUrl: coverUrl
+                    pdfUrl: pdfUrl
                 });
-                console.log('Semua file tuntas di awan!');
+                console.log('File PDF tuntas di awan!');
             } catch (err) {
                 console.error('Background Upload Error:', err);
             }
