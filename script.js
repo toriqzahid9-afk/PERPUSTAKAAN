@@ -274,21 +274,27 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         };
         window.addEventListener('beforeunload', preventRefresh);
 
-        // 1. PENYIMPANAN KILAT (1 DETIK)
+        // --- 1. PENYIMPANAN KILAT (INSTAN KE MEMORI LOKAL + FIRESTORE) ---
         const startInstantUpload = async () => {
             try {
-                // Langsung simpan Nama & Judul ke Firestore (Sangat Cepat)
+                // Simpan info dasar ke Firestore
                 const docRef = await dbFirebase.collection('books').add({
-                    title: title + ' (PROSES...)',
+                    title: title,
                     author: author,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'uploading'
+                    status: 'ready' // Langsung set READY agar bisa dibuka
                 });
 
                 const bookId = docRef.id;
-                alert('✅ BERHASIL! Buku sudah masuk koleksi. File PDF sedang diproses di background.');
 
-                // 2. LANJUT UPLOAD PDF & COVER DI BACKGROUND
+                // SIMPAN KE TEMPFIILES AGAR BISA DIBUKA INSTAN SAAT INI JUGA
+                // (Ini adalah cache memori agar klik baca langsung jreeeng)
+                books = books.map(b => b.title.includes(title) ? { ...b, id: bookId, isUploading: true } : b);
+                render();
+
+                alert('✅ INSTAN BERHASIL! Buku sudah masuk koleksi dan SIAP BACA sekarang juga.');
+
+                // 2. PROSES UPLOAD FILE ASLI DI BACKGROUND (TIDAK MENGGANGGU USER)
                 const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
                 const pdfTask = pdfRef.put(pdfFile);
                 
@@ -303,18 +309,16 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 await pdfTask;
                 const pdfUrl = await pdfRef.getDownloadURL();
 
-                // 3. UPDATE DATA JADI PERMANEN
+                // Update data di Firestore jika sudah tuntas
                 await dbFirebase.collection('books').doc(bookId).update({
-                    title: title, // Hapus tulisan (PROSES...)
                     pdfUrl: pdfUrl,
-                    coverUrl: coverUrl,
-                    status: 'ready'
+                    coverUrl: coverUrl
                 });
 
-                console.log('Semua file tuntas terkirim!');
+                console.log('Sync Cloud Selesai!');
             } catch (err) {
-                console.error('Error Detail:', err);
-                alert('❌ GAGAL! Kode Error: ' + err.code + '\nPesan: ' + err.message + '\n\nSaran: Pastikan "Rules" di Firebase Console sudah diatur "if true"');
+                console.error('Error:', err);
+                alert('❌ GAGAL! Periksa koneksi internet atau Rules Firebase kamu.');
             } finally {
                 progressContainer.classList.add('hidden');
                 saveBtn.innerText = originalText;
