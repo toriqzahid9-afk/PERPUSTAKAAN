@@ -41,14 +41,19 @@ async function initDB() {
     loadBooksFromDB();
 }
 
+let localPendingBooks = []; // Penampung buku yang sedang diupload
+
 async function loadBooksFromDB() {
     if (!dbFirebase) return;
     
-    // Gunakan onSnapshot agar HP & Laptop otomatis sinkron tanpa refresh
+    // Sinkronisasi Real-time
     dbFirebase.collection('books').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const serverBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Gabungkan buku server dengan buku yang masih proses upload di HP ini
+        books = [...localPendingBooks, ...serverBooks];
         render();
-        console.log("Data diperbarui secara real-time");
+        console.log("Data sinkron!");
     }, (error) => {
         console.error("Gagal sinkronisasi:", error);
     });
@@ -236,9 +241,9 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
             isUploading: true
         };
 
-        // Langsung munculkan di daftar
-        books.unshift(tempBook);
-        render();
+        // Masukkan ke daftar antrean lokal agar tidak hilang saat sinkronisasi
+        localPendingBooks.unshift(tempBook);
+        loadBooksFromDB(); // Trigger penggabungan data
 
         progressContainer.classList.remove('hidden');
         progressBar.style.width = '10%';
@@ -276,19 +281,16 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                const docRef = await dbFirebase.collection('books').add(newBook);
+                await dbFirebase.collection('books').add(newBook);
                 
-                // Ganti buku bayangan dengan data asli yang sudah tersimpan
-                const index = books.findIndex(b => b.id === tempId);
-                if (index !== -1) {
-                    books[index] = { id: docRef.id, ...newBook };
-                }
-                render();
+                // Hapus dari antrean lokal karena sudah masuk ke database online
+                localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
+                // loadBooksFromDB akan otomatis terpanggil oleh onSnapshot dari Firebase
+                
             } catch (err) {
                 console.error('Upload Gagal:', err);
-                // Hapus buku bayangan jika gagal
-                books = books.filter(b => b.id !== tempId);
-                render();
+                localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
+                loadBooksFromDB();
                 alert('Gagal mengunggah ' + title);
             } finally {
                 progressContainer.classList.add('hidden');
