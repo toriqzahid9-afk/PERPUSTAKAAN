@@ -10,20 +10,44 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 let books = [];
 let isAdmin = false;
 let tempFiles = { pdf: null, cover: null };
+
 // =============================================
-//   DATABASE (PHP Server API)
+//   FIREBASE CONFIGURATION
+// =============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBV_wDXwj4OWplfjeFdkgW_91T60t2aXTY",
+  authDomain: "perpustakaandigital-46861.firebaseapp.com",
+  projectId: "perpustakaandigital-46861",
+  storageBucket: "perpustakaandigital-46861.firebasestorage.app",
+  messagingSenderId: "884650687443",
+  appId: "1:884650687443:web:2c757bde39908cc7524d26",
+  measurementId: "G-LCWNRT59KT"
+};
+
+let dbFirebase, storageFirebase;
+try {
+    firebase.initializeApp(firebaseConfig);
+    dbFirebase = firebase.firestore();
+    storageFirebase = firebase.storage();
+} catch (e) {
+    console.warn("Firebase belum dikonfigurasi.", e);
+}
+
+// =============================================
+//   DATABASE (Firebase)
 // =============================================
 async function initDB() {
+    if (!dbFirebase) return;
     loadBooksFromDB();
 }
 
 async function loadBooksFromDB() {
     try {
-        const response = await fetch('get_books.php');
-        books = await response.json();
+        const snapshot = await dbFirebase.collection('books').orderBy('createdAt', 'desc').get();
+        books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
     } catch (e) {
-        console.error("Gagal memuat buku dari Server:", e);
+        console.error("Gagal memuat buku dari Firebase:", e);
     }
 }
 
@@ -174,80 +198,73 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 
     const saveBtn = document.getElementById('save-btn');
     const originalText = saveBtn.innerText;
+    const progressContainer = document.getElementById('upload-progress-container');
+    const progressBar = document.getElementById('upload-progress-bar');
 
     try {
-        saveBtn.innerText = 'MENGUNGGAH...';
         saveBtn.disabled = true;
-
+        
         if (!tempFiles.pdf || !tempFiles.pdf.blob) {
             alert('Pilih file PDF terlebih dahulu!');
-            saveBtn.innerText = originalText;
             saveBtn.disabled = false;
             return;
         }
 
-        const formData = new FormData();
-        formData.append('title', document.getElementById('add-title').value);
-        formData.append('author', document.getElementById('add-author').value);
-        formData.append('pdf', tempFiles.pdf.blob);
-        
-        if (tempFiles.cover) {
-            formData.append('cover', tempFiles.cover);
-        }
-
-        // Tampilkan progress bar
-        const progressContainer = document.getElementById('upload-progress-container');
-        const progressBar = document.getElementById('upload-progress-bar');
         progressContainer.classList.remove('hidden');
         progressBar.style.width = '0%';
 
-        // Gunakan XMLHttpRequest untuk melacak progress
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'upload.php', true);
+        // 1. Upload PDF ke Firebase Storage dengan Progress
+        const pdfFile = tempFiles.pdf.blob;
+        const pdfRef = storageFirebase.ref(`books/pdf_${Date.now()}_${pdfFile.name}`);
+        const pdfTask = pdfRef.put(pdfFile);
 
-        xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = percent + '%';
-                saveBtn.innerText = `MENGUNGGAH ${percent}%`;
+        pdfTask.on('state_changed', 
+            (snapshot) => {
+                const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                progressBar.style.width = progress + '%';
+                saveBtn.innerText = `MENGUNGGAH PDF ${progress}%`;
             }
+        );
+
+        await pdfTask;
+        const pdfUrl = await pdfRef.getDownloadURL();
+
+        // 2. Upload Cover (jika ada)
+        let coverUrl = null;
+        if (tempFiles.cover) {
+            saveBtn.innerText = 'MENGUNGGAH COVER...';
+            const coverFile = tempFiles.cover;
+            const coverRef = storageFirebase.ref(`covers/cover_${Date.now()}_${coverFile.name}`);
+            await coverRef.put(coverFile);
+            coverUrl = await coverRef.getDownloadURL();
+        }
+
+        // 3. Simpan ke Firestore
+        const newBook = {
+            title: document.getElementById('add-title').value,
+            author: document.getElementById('add-author').value,
+            pdfUrl: pdfUrl,
+            coverUrl: coverUrl,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        xhr.onload = () => {
-            const result = JSON.parse(xhr.responseText);
-            if (xhr.status === 200 && result.success) {
-                books.unshift(result.book);
-                render();
-                e.target.reset();
+        const docRef = await dbFirebase.collection('books').add(newBook);
+        newBook.id = docRef.id;
 
-                document.getElementById('pdf-label').textContent = 'Unggah File PDF';
-                document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
-                document.getElementById('pdf-label').classList.remove('text-cyan-400');
-                document.getElementById('cover-label').classList.remove('text-cyan-400');
-                tempFiles = { pdf: null, cover: null };
+        books.unshift(newBook);
+        render();
+        e.target.reset();
 
-                alert('Buku Berhasil Diunggah dan Tersimpan di Server!');
-            } else {
-                alert('Gagal menyimpan buku ke server: ' + (result.message || 'Error tidak diketahui'));
-            }
+        document.getElementById('pdf-label').textContent = 'Unggah File PDF';
+        document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
+        tempFiles = { pdf: null, cover: null };
 
-            progressContainer.classList.add('hidden');
-            saveBtn.innerText = originalText;
-            saveBtn.disabled = false;
-        };
-
-        xhr.onerror = () => {
-            alert('Gagal menyimpan buku! Pastikan koneksi atau server PHP berjalan.');
-            progressContainer.classList.add('hidden');
-            saveBtn.innerText = originalText;
-            saveBtn.disabled = false;
-        };
-
-        xhr.send(formData);
-
+        alert('Buku Berhasil Tersimpan Secara Online!');
     } catch (err) {
-        console.error('Error saat menyimpan:', err);
-        alert('Gagal menjalankan perintah unggah.');
+        console.error('Error:', err);
+        alert('Gagal: ' + err.message);
+    } finally {
+        progressContainer.classList.add('hidden');
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
