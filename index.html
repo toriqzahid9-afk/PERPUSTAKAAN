@@ -175,15 +175,18 @@
 
             <!-- ===== PAGE: ADMIN DASHBOARD ===== -->
             <div id="admin-dashboard" class="spa-content">
-                <div class="flex justify-between items-center mb-10 pt-10">
+                <div class="flex justify-between items-center mb-10 pt-20">
                     <h2 class="text-3xl font-bold">Panel <span class="neon-text">Manajer</span></h2>
+                    <button onclick="logout()" class="text-xs bg-red-500/20 text-red-500 px-4 py-2 rounded-lg border border-red-500/30 font-bold">
+                        KELUAR ADMIN
+                    </button>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                     <!-- Form Tambah Buku -->
                     <div class="lg:col-span-4">
-                        <div class="bg-[#161616] p-6 rounded-2xl border border-white/5 sticky top-28">
+                        <div class="bg-[#161616] p-6 rounded-2xl border border-white/5 lg:sticky lg:top-28">
                             <h3 class="font-bold mb-6 flex items-center text-cyan-400">
                                 <i class="fas fa-plus-circle mr-2"></i> Tambah Buku
                             </h3>
