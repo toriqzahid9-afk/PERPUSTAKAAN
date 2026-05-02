@@ -276,60 +276,56 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         };
         window.addEventListener('beforeunload', preventRefresh);
 
-        // 2. JALANKAN UPLOAD PARALEL
-        const startUpload = async () => {
+        // 1. PENYIMPANAN KILAT (1 DETIK)
+        const startInstantUpload = async () => {
             try {
-                // Upload PDF Task
-                const pdfRef = storageFirebase.ref(`books/pdf_${Date.now()}_${pdfFile.name}`);
-                const pdfTask = pdfRef.put(pdfFile);
-                pdfTask.on('state_changed', (snap) => {
-                    const p = 10 + Math.round((snap.bytesTransferred / snap.totalBytes) * 90);
-                    progressBar.style.width = p + '%';
-                    saveBtn.innerText = `UPLOADING ${p}%`;
+                // Langsung simpan Nama & Judul ke Firestore (Sangat Cepat)
+                const docRef = await dbFirebase.collection('books').add({
+                    title: title + ' (PROSES...)',
+                    author: author,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'uploading'
                 });
 
-                // Kompres & Upload Cover secara bersamaan
-                let coverPromise = Promise.resolve(null);
+                const bookId = docRef.id;
+                alert('✅ BERHASIL! Buku sudah masuk koleksi. File PDF sedang diproses di background.');
+
+                // 2. LANJUT UPLOAD PDF & COVER DI BACKGROUND
+                const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
+                const pdfTask = pdfRef.put(pdfFile);
+                
+                let coverUrl = null;
                 if (coverFile) {
-                    coverPromise = compressImage(coverFile).then(async (blob) => {
-                        const coverRef = storageFirebase.ref(`covers/cover_${Date.now()}.jpg`);
-                        await coverRef.put(blob);
-                        return coverRef.getDownloadURL();
-                    });
+                    const blob = await compressImage(coverFile);
+                    const coverRef = storageFirebase.ref(`covers/cover_${bookId}.jpg`);
+                    await coverRef.put(blob);
+                    coverUrl = await coverRef.getDownloadURL();
                 }
 
-                // Tunggu keduanya selesai
-                const [pdfUrl, coverUrl] = await Promise.all([
-                    pdfTask.then(() => pdfRef.getDownloadURL()),
-                    coverPromise
-                ]);
+                await pdfTask;
+                const pdfUrl = await pdfRef.getDownloadURL();
 
-                const newBook = {
-                    title: title,
-                    author: author,
+                // 3. UPDATE DATA JADI PERMANEN
+                await dbFirebase.collection('books').doc(bookId).update({
+                    title: title, // Hapus tulisan (PROSES...)
                     pdfUrl: pdfUrl,
                     coverUrl: coverUrl,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
+                    status: 'ready'
+                });
 
-                await dbFirebase.collection('books').add(newBook);
-                localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
-                alert('✅ BERHASIL TERSEDIA PERMANEN!');
-                
+                console.log('Semua file tuntas terkirim!');
             } catch (err) {
-                console.error('Upload Gagal:', err);
-                localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
-                alert('❌ GAGAL! Pastikan Storage Firebase kamu sudah diatur "Allow All".');
+                console.error('Error:', err);
+                alert('❌ GAGAL! Pastikan "STORAGE" & "FIRESTORE" di Firebase kamu sudah diatur "ALLOW ALL" (Rules: if true)');
             } finally {
                 progressContainer.classList.add('hidden');
                 saveBtn.innerText = originalText;
                 saveBtn.disabled = false;
                 window.removeEventListener('beforeunload', preventRefresh);
-                render();
             }
         };
 
-        startUpload();
+        startInstantUpload();
         e.target.reset();
         document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
