@@ -103,55 +103,66 @@ async function openBook(id) {
     try {
         console.log('Mencoba memuat buku:', book.title);
         
-        // --- 1. JALUR KILAT (TURBO DISK + STREAMING) ---
+        // --- 1. LANGSUNG BUKA FLIPBOOK (DENGAN SAMPUL GAMBAR) ---
+        // Ini Rahasia Kecepatannya: Pakai gambar sampul dulu biar INSTAN
+        try { $(flipbook).turn('destroy'); } catch (e) { }
+        flipbook.innerHTML = '';
+        
+        const firstPageImg = document.createElement('div');
+        firstPageImg.className = 'flipbook-page';
+        firstPageImg.innerHTML = `<img src="${getCoverUrl(book.coverUrl)}" style="width:100%;height:100%;object-fit:contain;">`;
+        flipbook.appendChild(firstPageImg);
+
+        // Inisialisasi Turn.js SEKARANG JUGA (Tanpa Nunggu PDF)
+        const isMobile = window.innerWidth < 768;
+        const bookWidth = Math.floor(isMobile ? (window.innerWidth - 40) : (window.innerWidth > 1000 ? 960 : window.innerWidth * 0.85));
+        const bookHeight = Math.floor(isMobile ? (window.innerHeight * 0.8) : (window.innerHeight * 0.75));
+
+        $(flipbook).turn({
+            width: bookWidth,
+            height: bookHeight,
+            autoCenter: true,
+            display: isMobile ? 'single' : 'double',
+            acceleration: true,
+            elevation: 50,
+            duration: 600
+        });
+
+        spinner.style.display = 'none'; // Matikan loading karena sudah kebuka
+
+        // --- 2. MUAT PDF DI BACKGROUND ---
         let loadingTask;
         const localBlob = await getFromLocalDisk(id);
-
         if (localBlob) {
-            console.log('Turbo Disk: Membuka dari memori permanen HP (INSTAN!)');
-            const pdfData = await localBlob.arrayBuffer();
-            loadingTask = pdfjsLib.getDocument({ data: pdfData });
+            loadingTask = pdfjsLib.getDocument({ data: await localBlob.arrayBuffer() });
         } else if (book.pdfUrl) {
-            console.log('Streaming dari server...');
             loadingTask = pdfjsLib.getDocument(book.pdfUrl);
         } else {
-            alert('Sabar bro, file sedang dikirim ke awan. Jangan direfresh sampai muncul notifikasi BERHASIL ya!');
-            overlay.style.display = 'none';
             return;
         }
 
         const pdf = await loadingTask.promise;
         
-        try { $(flipbook).turn('destroy'); } catch (e) { }
-        flipbook.innerHTML = '';
-
-        // Fungsi render kilat
-        async function renderPage(num) {
+        // Fungsi render halaman untuk update nanti
+        async function renderPageToCanvas(num) {
             const page = await pdf.getPage(num);
-            const isMobile = window.innerWidth < 768;
             const viewport = page.getViewport({ scale: isMobile ? 1.0 : 1.3 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.height = viewport.height;
             canvas.width = viewport.width;
             await page.render({ canvasContext: context, viewport: viewport }).promise;
+            return canvas;
+        }
 
+        // Tambahkan halaman sisanya ke flipbook secara diam-diam
+        for (let i = 2; i <= Math.min(pdf.numPages, 10); i++) {
+            const canvas = await renderPageToCanvas(i);
             const pageDiv = document.createElement('div');
             pageDiv.className = 'flipbook-page';
             pageDiv.appendChild(canvas);
-            return pageDiv;
+            $(flipbook).turn('addPage', pageDiv, i);
         }
-
-        // --- 2. FAST START: RENDER MINIMAL DULU ---
-        const isMobile = window.innerWidth < 768;
-        const initialLoad = isMobile ? 1 : 2; // Mobile cuma nunggu 1 hal, Desktop 2 hal
-        
-        for (let i = 1; i <= Math.min(pdf.numPages, initialLoad); i++) {
-            const pageDiv = await renderPage(i);
-            flipbook.appendChild(pageDiv);
-        }
-
-        // --- 3. INISIALISASI TURN.JS (LANGSUNG BUKA!) ---
 
         // Kurangi ukuran buku agar menyisakan ruang untuk sampul (cover & spine)
         // Cover padding & border takes up roughly ~40px horizontally and ~20px vertically
@@ -391,14 +402,14 @@ async function deleteBook(id) {
 //   RENDER UI
 // =============================================
 
+function getCoverUrl(coverUrl) {
+    if (!coverUrl) return 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK';
+    return coverUrl;
+}
+
 function render() {
     const grid = document.getElementById('book-grid');
     const list = document.getElementById('admin-book-list');
-
-    const getCoverUrl = (coverUrl) => {
-        if (!coverUrl) return 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK';
-        return coverUrl;
-    };
 
     // --- Render kartu buku di halaman utama ---
     grid.innerHTML = books.map(b => `
