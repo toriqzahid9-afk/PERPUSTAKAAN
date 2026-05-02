@@ -59,6 +59,33 @@ async function loadBooksFromDB() {
     });
 }
 
+// --- SISTEM DISK LOKAL PERMANEN (INDEXEDDB) ---
+const dbName = "PerpusDelpikDB";
+function saveToLocalDisk(id, blob) {
+    const request = indexedDB.open(dbName, 1);
+    request.onupgradeneeded = (e) => e.target.result.createObjectStore("pdf_cache");
+    request.onsuccess = (e) => {
+        const db = e.target.result;
+        const tx = db.transaction("pdf_cache", "readwrite");
+        tx.objectStore("pdf_cache").put(blob, id);
+    };
+}
+
+function getFromLocalDisk(id) {
+    return new Promise((resolve) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onsuccess = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains("pdf_cache")) return resolve(null);
+            const tx = db.transaction("pdf_cache", "readonly");
+            const getReq = tx.objectStore("pdf_cache").get(id);
+            getReq.onsuccess = () => resolve(getReq.result);
+            getReq.onerror = () => resolve(null);
+        };
+        request.onupgradeneeded = (e) => e.target.result.createObjectStore("pdf_cache");
+    });
+}
+
 // =============================================
 //   FLIPBOOK / READER LOGIC
 // =============================================
@@ -76,23 +103,21 @@ async function openBook(id) {
     try {
         console.log('Mencoba memuat buku:', book.title);
         
-        // --- 1. JALUR KILAT (STREAMING) ---
+        // --- 1. JALUR KILAT (TURBO DISK + STREAMING) ---
         let loadingTask;
-        if (book.isUploading && tempFiles.pdf && tempFiles.pdf.blob) {
-            // Jika lokal, pakai data lokal (Turbo Cache)
-            const pdfData = await tempFiles.pdf.blob.arrayBuffer();
+        const localBlob = await getFromLocalDisk(id);
+
+        if (localBlob) {
+            console.log('Turbo Disk: Membuka dari memori permanen HP (INSTAN!)');
+            const pdfData = await localBlob.arrayBuffer();
             loadingTask = pdfjsLib.getDocument({ data: pdfData });
-        } else {
-            if (!book.pdfUrl) {
-                if (book.isUploading) {
-                    alert('Sabar bro, file sedang dikirim ke awan. Tunggu notifikasi "BERHASIL" dulu ya!');
-                    overlay.style.display = 'none';
-                    return;
-                }
-                throw new Error('URL PDF tidak ditemukan.');
-            }
-            // STREAMING: PDF.js akan memuat halaman per halaman tanpa nunggu semua beres
+        } else if (book.pdfUrl) {
+            console.log('Streaming dari server...');
             loadingTask = pdfjsLib.getDocument(book.pdfUrl);
+        } else {
+            alert('Sabar bro, file sedang dikirim ke awan. Jangan direfresh sampai muncul notifikasi BERHASIL ya!');
+            overlay.style.display = 'none';
+            return;
         }
 
         const pdf = await loadingTask.promise;
@@ -286,6 +311,9 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 });
 
                 const bookId = docRef.id;
+
+                // SIMPAN KE DISK LOKAL PERMANEN (Agar bisa dibuka meskipun direfresh)
+                saveToLocalDisk(bookId, pdfFile);
 
                 // SIMPAN KE TEMPFIILES AGAR BISA DIBUKA INSTAN SAAT INI JUGA
                 // (Ini adalah cache memori agar klik baca langsung jreeeng)
