@@ -42,13 +42,16 @@ async function initDB() {
 }
 
 async function loadBooksFromDB() {
-    try {
-        const snapshot = await dbFirebase.collection('books').orderBy('createdAt', 'desc').get();
+    if (!dbFirebase) return;
+    
+    // Gunakan onSnapshot agar HP & Laptop otomatis sinkron tanpa refresh
+    dbFirebase.collection('books').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         render();
-    } catch (e) {
-        console.error("Gagal memuat buku dari Firebase:", e);
-    }
+        console.log("Data diperbarui secara real-time");
+    }, (error) => {
+        console.error("Gagal sinkronisasi:", error);
+    });
 }
 
 // =============================================
@@ -302,17 +305,10 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 };
 
 async function deleteBook(id) {
-    if (!confirm('Hapus buku ini secara permanen dari server?')) return;
+    if (!confirm('Hapus buku ini secara permanen?')) return;
     try {
-        const response = await fetch('delete.php?id=' + id);
-        const result = await response.json();
-        
-        if (result.success) {
-            books = books.filter(b => b.id !== id);
-            render();
-        } else {
-            alert('Gagal menghapus buku dari server.');
-        }
+        await dbFirebase.collection('books').doc(id).delete();
+        // UI akan terupdate otomatis via onSnapshot
     } catch (err) {
         console.error("Gagal menghapus:", err);
         alert("Gagal menghapus buku!");
