@@ -225,17 +225,18 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         const coverFile = tempFiles.cover;
         const timestamp = Date.now();
 
-        // 2. PROSES KILAT: UPLOAD COVER DULU (BIAR FOTO LANGSUNG MUNCUL)
+        // 2. PROSES INSTAN DI LOKAL DULU
         saveBtn.disabled = true;
-        saveBtn.innerText = 'MENYIMPAN FOTO...';
+        saveBtn.innerText = 'MEMPROSES...';
         
-        let coverUrl = null;
+        let localCoverUrl = null;
+        let compressedBlob = null;
         if (coverFile) {
             // Kompresi Gambar agar super cepat
             const canvas = document.createElement('canvas');
             const img = new Image();
             img.src = URL.createObjectURL(coverFile);
-            const compressedBlob = await new Promise(res => {
+            compressedBlob = await new Promise(res => {
                 img.onload = () => {
                     const ctx = canvas.getContext('2d');
                     const scale = 400 / img.width;
@@ -244,27 +245,29 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                     canvas.toBlob(res, 'image/jpeg', 0.7);
                 }
             });
-            const coverRef = storageFirebase.ref(`covers/cover_${timestamp}.jpg`);
-            await coverRef.put(compressedBlob);
-            coverUrl = await coverRef.getDownloadURL();
+            localCoverUrl = URL.createObjectURL(compressedBlob);
         }
 
-        // 3. SIMPAN METADATA (DENGAN COVER URL)
-        saveBtn.innerText = 'MENYIMPAN DATA...';
-        const docRef = await dbFirebase.collection('books').add({
+        const tempId = 'temp_' + timestamp;
+        
+        // Tambahkan ke UI secara instan!
+        const newBook = {
+            id: tempId,
             title: title,
             author: author,
-            coverUrl: coverUrl, // FOTO LANGSUNG MASUK
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'ready' // Langsung set ready agar bisa dibaca di alat ini
-        });
-
-        const bookId = docRef.id;
+            coverUrl: localCoverUrl,
+            status: 'uploading',
+            createdAt: new Date()
+        };
         
-        // Simpan ke memori permanen HP agar bisa dibaca tanpa nunggu upload
-        saveToLocalDisk(bookId, pdfFile);
+        localPendingBooks.push(newBook);
+        books = [newBook, ...books]; // Munculkan paling atas sementara
+        render();
+        
+        // Simpan PDF ke cache lokal sementara pakai tempId
+        saveToLocalDisk(tempId, pdfFile);
 
-        alert('✅ BERHASIL! Foto dan buku sudah masuk koleksi. File PDF sedang diproses di background.');
+        alert('✅ BERHASIL! Buku ditambahkan. Proses upload berjalan di latar belakang.');
         
         // RESET FORM SEGERA
         e.target.reset();
@@ -275,9 +278,31 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         saveBtn.disabled = false;
         saveBtn.innerText = originalText;
 
-        // 4. PROSES UPLOAD PDF ASLI DI LATAR BELAKANG (BACKGROUND)
+        // 4. PROSES UPLOAD ASLI DI LATAR BELAKANG (BACKGROUND)
         (async () => {
             try {
+                let coverUrl = null;
+                if (compressedBlob) {
+                    console.log('Background upload cover dimulai...');
+                    const coverRef = storageFirebase.ref(`covers/cover_${timestamp}.jpg`);
+                    await coverRef.put(compressedBlob);
+                    coverUrl = await coverRef.getDownloadURL();
+                }
+
+                console.log('Background menyimpan metadata...');
+                const docRef = await dbFirebase.collection('books').add({
+                    title: title,
+                    author: author,
+                    coverUrl: coverUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'ready'
+                });
+
+                const bookId = docRef.id;
+                
+                // Pindahkan PDF lokal ke ID asli
+                saveToLocalDisk(bookId, currentPdf);
+                
                 console.log('Background upload PDF dimulai...');
                 const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
                 await pdfRef.put(currentPdf);
@@ -286,7 +311,10 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 await dbFirebase.collection('books').doc(bookId).update({
                     pdfUrl: pdfUrl
                 });
-                console.log('File PDF tuntas di awan!');
+                
+                // Hapus dari pending setelah selesai (akan digantikan oleh data asli dari server via onSnapshot)
+                localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
+                console.log('Semua file tuntas di awan!');
             } catch (err) {
                 console.error('Background Upload Error:', err);
             }
