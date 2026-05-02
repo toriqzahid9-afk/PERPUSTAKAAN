@@ -50,6 +50,9 @@ async function loadBooksFromDB() {
     dbFirebase.collection('books').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         const serverBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
+        // Hapus dari localPending jika sudah ada di server
+        localPendingBooks = localPendingBooks.filter(local => !serverBooks.find(server => server.id === local.id));
+        
         // Gabungkan buku server dengan buku yang masih proses upload di HP ini
         books = [...localPendingBooks, ...serverBooks];
         render();
@@ -248,11 +251,12 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
             localCoverUrl = URL.createObjectURL(compressedBlob);
         }
 
-        const tempId = 'temp_' + timestamp;
+        const newDocRef = dbFirebase.collection('books').doc();
+        const bookId = newDocRef.id;
         
         // Tambahkan ke UI secara instan!
         const newBook = {
-            id: tempId,
+            id: bookId,
             title: title,
             author: author,
             coverUrl: localCoverUrl,
@@ -264,8 +268,8 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         books = [newBook, ...books]; // Munculkan paling atas sementara
         render();
         
-        // Simpan PDF ke cache lokal sementara pakai tempId
-        saveToLocalDisk(tempId, pdfFile);
+        // Simpan PDF ke cache lokal sementara
+        saveToLocalDisk(bookId, pdfFile);
 
         alert('✅ BERHASIL! Buku ditambahkan. Proses upload berjalan di latar belakang.');
         
@@ -290,7 +294,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 }
 
                 console.log('Background menyimpan metadata...');
-                const docRef = await dbFirebase.collection('books').add({
+                await newDocRef.set({
                     title: title,
                     author: author,
                     coverUrl: coverUrl,
@@ -298,22 +302,17 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                     status: 'ready'
                 });
 
-                const bookId = docRef.id;
-                
-                // Pindahkan PDF lokal ke ID asli
-                saveToLocalDisk(bookId, currentPdf);
-                
                 console.log('Background upload PDF dimulai...');
                 const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
                 await pdfRef.put(currentPdf);
                 const pdfUrl = await pdfRef.getDownloadURL();
 
-                await dbFirebase.collection('books').doc(bookId).update({
+                await newDocRef.update({
                     pdfUrl: pdfUrl
                 });
                 
-                // Hapus dari pending setelah selesai (akan digantikan oleh data asli dari server via onSnapshot)
-                localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
+                // Hapus dari pending setelah selesai (opsional karena sudah di-handle oleh onSnapshot)
+                localPendingBooks = localPendingBooks.filter(b => b.id !== bookId);
                 console.log('Semua file tuntas di awan!');
             } catch (err) {
                 console.error('Background Upload Error:', err);
