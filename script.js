@@ -315,8 +315,8 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 
                 console.log('Semua file tuntas terkirim!');
             } catch (err) {
-                console.error('Error:', err);
-                alert('❌ GAGAL! Pastikan "STORAGE" & "FIRESTORE" di Firebase kamu sudah diatur "ALLOW ALL" (Rules: if true)');
+                console.error('Error Detail:', err);
+                alert('❌ GAGAL! Kode Error: ' + err.code + '\nPesan: ' + err.message + '\n\nSaran: Pastikan "Rules" di Firebase Console sudah diatur "if true"');
             } finally {
                 progressContainer.classList.add('hidden');
                 saveBtn.innerText = originalText;
