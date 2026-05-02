@@ -211,60 +211,76 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         }
 
         progressContainer.classList.remove('hidden');
-        progressBar.style.width = '0%';
+        progressBar.style.width = '10%';
+        saveBtn.innerText = 'MEMPROSES...';
 
-        // 1. Upload PDF ke Firebase Storage dengan Progress
         const pdfFile = tempFiles.pdf.blob;
-        const pdfRef = storageFirebase.ref(`books/pdf_${Date.now()}_${pdfFile.name}`);
-        const pdfTask = pdfRef.put(pdfFile);
+        const coverFile = tempFiles.cover;
+        const title = document.getElementById('add-title').value;
+        const author = document.getElementById('add-author').value;
 
-        pdfTask.on('state_changed', 
-            (snapshot) => {
-                const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                progressBar.style.width = progress + '%';
-                saveBtn.innerText = `MENGUNGGAH PDF ${progress}%`;
+        // Fungsi Helper untuk upload di background
+        const startUpload = async () => {
+            try {
+                // 1. Upload PDF
+                const pdfRef = storageFirebase.ref(`books/pdf_${Date.now()}_${pdfFile.name}`);
+                const pdfTask = pdfRef.put(pdfFile);
+                
+                pdfTask.on('state_changed', (snap) => {
+                    const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                    progressBar.style.width = p + '%';
+                });
+
+                await pdfTask;
+                const pdfUrl = await pdfRef.getDownloadURL();
+
+                // 2. Upload Cover (Jika ada)
+                let coverUrl = null;
+                if (coverFile) {
+                    const coverRef = storageFirebase.ref(`covers/cover_${Date.now()}_${coverFile.name}`);
+                    await coverRef.put(coverFile);
+                    coverUrl = await coverRef.getDownloadURL();
+                }
+
+                // 3. Simpan Metadata ke Firestore
+                const newBook = {
+                    title: title,
+                    author: author,
+                    pdfUrl: pdfUrl,
+                    coverUrl: coverUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                const docRef = await dbFirebase.collection('books').add(newBook);
+                newBook.id = docRef.id;
+
+                // Update data lokal
+                books.unshift(newBook);
+                render();
+                console.log('Upload Berhasil Tuntas!');
+            } catch (err) {
+                console.error('Upload Background Gagal:', err);
+                alert('Gagal mengunggah file di background. Coba lagi.');
+            } finally {
+                progressContainer.classList.add('hidden');
             }
-        );
-
-        await pdfTask;
-        const pdfUrl = await pdfRef.getDownloadURL();
-
-        // 2. Upload Cover (jika ada)
-        let coverUrl = null;
-        if (tempFiles.cover) {
-            saveBtn.innerText = 'MENGUNGGAH COVER...';
-            const coverFile = tempFiles.cover;
-            const coverRef = storageFirebase.ref(`covers/cover_${Date.now()}_${coverFile.name}`);
-            await coverRef.put(coverFile);
-            coverUrl = await coverRef.getDownloadURL();
-        }
-
-        // 3. Simpan ke Firestore
-        const newBook = {
-            title: document.getElementById('add-title').value,
-            author: document.getElementById('add-author').value,
-            pdfUrl: pdfUrl,
-            coverUrl: coverUrl,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        const docRef = await dbFirebase.collection('books').add(newBook);
-        newBook.id = docRef.id;
+        // JALANKAN UPLOAD DI BACKGROUND
+        startUpload();
 
-        books.unshift(newBook);
-        render();
+        // BERIKAN FEEDBACK INSTAN (1 DETIK)
+        alert('Data sudah diterima! File sedang diunggah di background. Kamu bisa lanjut bekerja.');
+        
         e.target.reset();
-
         document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
         tempFiles = { pdf: null, cover: null };
 
-        alert('Buku Berhasil Tersimpan Secara Online!');
     } catch (err) {
         console.error('Error:', err);
-        alert('Gagal: ' + err.message);
+        alert('Gagal memulai proses unggah.');
     } finally {
-        progressContainer.classList.add('hidden');
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
