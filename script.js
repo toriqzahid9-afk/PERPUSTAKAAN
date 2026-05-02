@@ -100,11 +100,11 @@ async function openBook(id) {
 
     overlay.style.display = 'flex';
     spinner.style.display = 'flex';
+
     try {
         console.log('Mencoba memuat buku:', book.title);
         
-        // --- 1. LANGSUNG BUKA FLIPBOOK (DENGAN SAMPUL GAMBAR) ---
-        // Ini Rahasia Kecepatannya: Pakai gambar sampul dulu biar INSTAN
+        // 1. INSTAN: BUKA DULU PAKAI SAMPUL
         try { $(flipbook).turn('destroy'); } catch (e) { }
         flipbook.innerHTML = '';
         
@@ -113,7 +113,6 @@ async function openBook(id) {
         firstPageImg.innerHTML = `<img src="${getCoverUrl(book.coverUrl)}" style="width:100%;height:100%;object-fit:contain;">`;
         flipbook.appendChild(firstPageImg);
 
-        // Inisialisasi Turn.js SEKARANG JUGA (Tanpa Nunggu PDF)
         const isMobile = window.innerWidth < 768;
         const bookWidth = Math.floor(isMobile ? (window.innerWidth - 40) : (window.innerWidth > 1000 ? 960 : window.innerWidth * 0.85));
         const bookHeight = Math.floor(isMobile ? (window.innerHeight * 0.8) : (window.innerHeight * 0.75));
@@ -128,9 +127,9 @@ async function openBook(id) {
             duration: 600
         });
 
-        spinner.style.display = 'none'; // Matikan loading karena sudah kebuka
+        spinner.style.display = 'none';
 
-        // --- 2. MUAT PDF DI BACKGROUND ---
+        // 2. MUAT PDF DI BACKGROUND
         let loadingTask;
         const localBlob = await getFromLocalDisk(id);
         if (localBlob) {
@@ -138,12 +137,12 @@ async function openBook(id) {
         } else if (book.pdfUrl) {
             loadingTask = pdfjsLib.getDocument(book.pdfUrl);
         } else {
+            console.warn("File tidak ditemukan.");
             return;
         }
 
         const pdf = await loadingTask.promise;
         
-        // Fungsi render halaman untuk update nanti
         async function renderPageToCanvas(num) {
             const page = await pdf.getPage(num);
             const viewport = page.getViewport({ scale: isMobile ? 1.0 : 1.3 });
@@ -155,65 +154,30 @@ async function openBook(id) {
             return canvas;
         }
 
-        // Tambahkan halaman sisanya ke flipbook secara diam-diam
-        for (let i = 2; i <= Math.min(pdf.numPages, 10); i++) {
-            const canvas = await renderPageToCanvas(i);
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'flipbook-page';
-            pageDiv.appendChild(canvas);
-            $(flipbook).turn('addPage', pageDiv, i);
-        }
-
-        // Kurangi ukuran buku agar menyisakan ruang untuk sampul (cover & spine)
-        // Cover padding & border takes up roughly ~40px horizontally and ~20px vertically
-        const bookWidth = Math.floor(isMobile ? (window.innerWidth - 40) : (window.innerWidth > 1000 ? 960 : window.innerWidth * 0.85));
-        const bookHeight = Math.floor(isMobile ? (window.innerHeight * 0.8) : (window.innerHeight * 0.75));
-
-        $(flipbook).turn({
-            width: bookWidth,
-            height: bookHeight,
-            autoCenter: true,
-            display: isMobile ? 'single' : 'double',
-            acceleration: true,
-            gradients: true,
-            elevation: 100,
-            duration: 800,
-            pages: pdf.numPages, // Beritahu turn.js total halaman sebenarnya
-            when: {
-                turning: function (e, page) {
-                    const pageNum = document.getElementById('page-number');
-                    if (pageNum) pageNum.innerText = `Hal. ${page}`;
-                }
-            }
-        });
-
-        spinner.style.display = 'none';
-        console.log('Flipbook started with initial pages');
-
-        // Render sisa halaman secara berurutan di background agar tidak crash/lemot
+        // Update hal 1 dengan canvas asli (jika sudah siap)
         (async () => {
-            for (let i = initialPagesToLoad + 1; i <= pdf.numPages; i++) {
-                try {
-                    // Cek apakah reader masih terbuka sebelum lanjut render
-                    if (document.getElementById('reader-overlay').style.display === 'none') break;
-
-                    const pageDiv = await renderPage(i);
-                    $(flipbook).turn('addPage', pageDiv, i);
-
-                    // Beri jeda kecil agar browser tetap responsif
-                    await new Promise(r => setTimeout(r, 50));
-                } catch (bgErr) {
-                    console.warn(`Gagal render halaman ${i} di background:`, bgErr);
-                }
+            const canvas1 = await renderPageToCanvas(1);
+            const page1 = $(flipbook).find('.flipbook-page').first();
+            page1.empty().append(canvas1);
+            
+            // Tambahkan sisa halaman
+            for (let i = 2; i <= pdf.numPages; i++) {
+                if (overlay.style.display === 'none') break;
+                const canvas = await renderPageToCanvas(i);
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'flipbook-page';
+                pageDiv.appendChild(canvas);
+                $(flipbook).turn('addPage', pageDiv, i);
+                await new Promise(r => setTimeout(r, 50));
             }
-            console.log('Semua halaman berhasil di-render di background');
         })();
 
     } catch (err) {
-        console.error('CRITICAL ERROR:', err);
+        console.error('Reader Error:', err);
         alert('Gagal memuat buku: ' + err.message);
         closeReader();
     }
+}
 }
 
 function closeReader() {
