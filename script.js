@@ -76,11 +76,12 @@ async function openBook(id) {
     try {
         console.log('Mencoba memuat buku:', book.title);
         
-        let pdfData;
-        // --- TURBO CACHE: BUKA INSTAN DARI LOKAL ---
+        // --- 1. JALUR KILAT (STREAMING) ---
+        let loadingTask;
         if (book.isUploading && tempFiles.pdf && tempFiles.pdf.blob) {
-            console.log('Menggunakan file lokal agar INSTAN');
-            pdfData = await tempFiles.pdf.blob.arrayBuffer();
+            // Jika lokal, pakai data lokal (Turbo Cache)
+            const pdfData = await tempFiles.pdf.blob.arrayBuffer();
+            loadingTask = pdfjsLib.getDocument({ data: pdfData });
         } else {
             if (!book.pdfUrl) {
                 if (book.isUploading) {
@@ -88,31 +89,22 @@ async function openBook(id) {
                     overlay.style.display = 'none';
                     return;
                 }
-                throw new Error('File PDF tidak ditemukan.');
+                throw new Error('URL PDF tidak ditemukan.');
             }
-            // Load dari URL server
-            const response = await fetch(book.pdfUrl);
-            pdfData = await response.arrayBuffer();
+            // STREAMING: PDF.js akan memuat halaman per halaman tanpa nunggu semua beres
+            loadingTask = pdfjsLib.getDocument(book.pdfUrl);
         }
+
+        const pdf = await loadingTask.promise;
         
-        // Hancurkan instance turn.js sebelumnya jika ada
         try { $(flipbook).turn('destroy'); } catch (e) { }
         flipbook.innerHTML = '';
 
-        if (typeof pdfjsLib === 'undefined') {
-            throw new Error('Library PDF.js belum dimuat. Periksa koneksi internet Anda.');
-        }
-
-        // Muat data PDF
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-
-        console.log('PDF berhasil dimuat. Jumlah halaman:', pdf.numPages);
-
-        // Fungsi helper untuk render satu halaman
+        // Fungsi render kilat
         async function renderPage(num) {
             const page = await pdf.getPage(num);
             const isMobile = window.innerWidth < 768;
-            const viewport = page.getViewport({ scale: isMobile ? 1.0 : 1.5 });
+            const viewport = page.getViewport({ scale: isMobile ? 1.0 : 1.3 });
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.height = viewport.height;
@@ -125,18 +117,16 @@ async function openBook(id) {
             return pageDiv;
         }
 
-        // Render 2 halaman pertama secara paralel untuk kecepatan (Fast Start)
-        const initialPagesToLoad = Math.min(pdf.numPages, 4);
-        const initialPagePromises = [];
-        for (let i = 1; i <= initialPagesToLoad; i++) {
-            initialPagePromises.push(renderPage(i));
+        // --- 2. FAST START: RENDER MINIMAL DULU ---
+        const isMobile = window.innerWidth < 768;
+        const initialLoad = isMobile ? 1 : 2; // Mobile cuma nunggu 1 hal, Desktop 2 hal
+        
+        for (let i = 1; i <= Math.min(pdf.numPages, initialLoad); i++) {
+            const pageDiv = await renderPage(i);
+            flipbook.appendChild(pageDiv);
         }
 
-        const renderedPages = await Promise.all(initialPagePromises);
-        renderedPages.forEach(p => flipbook.appendChild(p));
-
-        // Inisialisasi Turn.js segera setelah halaman awal siap
-        const isMobile = window.innerWidth < 768;
+        // --- 3. INISIALISASI TURN.JS (LANGSUNG BUKA!) ---
 
         // Kurangi ukuran buku agar menyisakan ruang untuk sampul (cover & spine)
         // Cover padding & border takes up roughly ~40px horizontally and ~20px vertically
