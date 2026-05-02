@@ -210,19 +210,33 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
             return;
         }
 
+        const title = document.getElementById('add-title').value;
+        const author = document.getElementById('add-author').value;
+        const pdfFile = tempFiles.pdf.blob;
+        const coverFile = tempFiles.cover;
+
+        // 1. BUAT BUKU "BAYANGAN" (INSTAN TAMPIL)
+        const tempId = 'temp_' + Date.now();
+        const tempBook = {
+            id: tempId,
+            title: title + ' (MENGUNGGAH...)',
+            author: author,
+            coverUrl: coverFile ? URL.createObjectURL(coverFile) : null,
+            isUploading: true
+        };
+
+        // Langsung munculkan di daftar
+        books.unshift(tempBook);
+        render();
+
         progressContainer.classList.remove('hidden');
         progressBar.style.width = '10%';
         saveBtn.innerText = 'MEMPROSES...';
 
-        const pdfFile = tempFiles.pdf.blob;
-        const coverFile = tempFiles.cover;
-        const title = document.getElementById('add-title').value;
-        const author = document.getElementById('add-author').value;
-
-        // Fungsi Helper untuk upload di background
+        // 2. JALANKAN UPLOAD ASLI DI BACKGROUND
         const startUpload = async () => {
             try {
-                // 1. Upload PDF
+                // Upload PDF
                 const pdfRef = storageFirebase.ref(`books/pdf_${Date.now()}_${pdfFile.name}`);
                 const pdfTask = pdfRef.put(pdfFile);
                 
@@ -234,7 +248,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 await pdfTask;
                 const pdfUrl = await pdfRef.getDownloadURL();
 
-                // 2. Upload Cover (Jika ada)
+                // Upload Cover
                 let coverUrl = null;
                 if (coverFile) {
                     const coverRef = storageFirebase.ref(`covers/cover_${Date.now()}_${coverFile.name}`);
@@ -242,7 +256,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                     coverUrl = await coverRef.getDownloadURL();
                 }
 
-                // 3. Simpan Metadata ke Firestore
+                // Simpan ke Firestore
                 const newBook = {
                     title: title,
                     author: author,
@@ -252,26 +266,27 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 };
 
                 const docRef = await dbFirebase.collection('books').add(newBook);
-                newBook.id = docRef.id;
-
-                // Update data lokal
-                books.unshift(newBook);
+                
+                // Ganti buku bayangan dengan data asli yang sudah tersimpan
+                const index = books.findIndex(b => b.id === tempId);
+                if (index !== -1) {
+                    books[index] = { id: docRef.id, ...newBook };
+                }
                 render();
-                console.log('Upload Berhasil Tuntas!');
             } catch (err) {
-                console.error('Upload Background Gagal:', err);
-                alert('Gagal mengunggah file di background. Coba lagi.');
+                console.error('Upload Gagal:', err);
+                // Hapus buku bayangan jika gagal
+                books = books.filter(b => b.id !== tempId);
+                render();
+                alert('Gagal mengunggah ' + title);
             } finally {
                 progressContainer.classList.add('hidden');
             }
         };
 
-        // JALANKAN UPLOAD DI BACKGROUND
         startUpload();
 
-        // BERIKAN FEEDBACK INSTAN (1 DETIK)
-        alert('Data sudah diterima! File sedang diunggah di background. Kamu bisa lanjut bekerja.');
-        
+        // 3. FEEDBACK FORM SELESAI (1 DETIK)
         e.target.reset();
         document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
@@ -279,7 +294,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 
     } catch (err) {
         console.error('Error:', err);
-        alert('Gagal memulai proses unggah.');
+        alert('Gagal memproses buku.');
     } finally {
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
