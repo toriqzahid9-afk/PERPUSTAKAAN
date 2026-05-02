@@ -84,8 +84,8 @@
 
             <!-- Hamburger Button (Mobile) -->
             <div class="md:hidden flex items-center">
-                <button id="mobile-menu-btn" class="text-white text-2xl p-2 focus:outline-none">
-                    <i class="fas fa-bars"></i>
+                <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="text-white text-2xl p-2 focus:outline-none cursor-pointer">
+                    <i class="fas fa-bars pointer-events-none"></i>
                 </button>
             </div>
         </div>
@@ -209,6 +209,11 @@
                                         onchange="handleFileChange(this, 'cover-label')">
                                 </div>
 
+                                <!-- Progress Bar -->
+                                <div id="upload-progress-container" class="hidden w-full bg-black rounded-full h-2 mb-2 overflow-hidden border border-white/5">
+                                    <div id="upload-progress-bar" class="bg-cyan-500 h-full w-0 transition-all duration-300"></div>
+                                </div>
+
                                 <button type="submit" id="save-btn"
                                     class="w-full bg-cyan-500 text-black font-bold py-3 rounded-lg text-sm hover:bg-cyan-400 transition">
                                     SIMPAN KOLEKSI
@@ -247,11 +252,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
-
-    <!-- Firebase (Online Database) -->
-    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-storage-compat.js"></script>
 
     <!-- Custom Script -->
     <script src="script.js"></script>
