@@ -137,7 +137,7 @@ async function openBook(id) {
         } else if (book.pdfUrl) {
             loadingTask = pdfjsLib.getDocument(book.pdfUrl);
         } else {
-            console.warn("File tidak ditemukan.");
+            console.warn("File belum ada di server.");
             return;
         }
 
@@ -154,13 +154,11 @@ async function openBook(id) {
             return canvas;
         }
 
-        // Update hal 1 dengan canvas asli (jika sudah siap)
+        // Update hal 1 & tambah halaman lain
         (async () => {
             const canvas1 = await renderPageToCanvas(1);
-            const page1 = $(flipbook).find('.flipbook-page').first();
-            page1.empty().append(canvas1);
+            $(flipbook).find('.flipbook-page').first().empty().append(canvas1);
             
-            // Tambahkan sisa halaman
             for (let i = 2; i <= pdf.numPages; i++) {
                 if (overlay.style.display === 'none') break;
                 const canvas = await renderPageToCanvas(i);
@@ -274,30 +272,22 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         };
         window.addEventListener('beforeunload', preventRefresh);
 
-        // --- 1. PENYIMPANAN KILAT (INSTAN KE MEMORI LOKAL + FIRESTORE) ---
         const startInstantUpload = async () => {
             try {
-                // Simpan info dasar ke Firestore
                 const docRef = await dbFirebase.collection('books').add({
                     title: title,
                     author: author,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'ready' // Langsung set READY agar bisa dibuka
+                    status: 'ready'
                 });
 
                 const bookId = docRef.id;
-
-                // SIMPAN KE DISK LOKAL PERMANEN (Agar bisa dibuka meskipun direfresh)
                 saveToLocalDisk(bookId, pdfFile);
-
-                // SIMPAN KE TEMPFIILES AGAR BISA DIBUKA INSTAN SAAT INI JUGA
-                // (Ini adalah cache memori agar klik baca langsung jreeeng)
                 books = books.map(b => b.title.includes(title) ? { ...b, id: bookId, isUploading: true } : b);
                 render();
 
-                alert('✅ INSTAN BERHASIL! Buku sudah masuk koleksi dan SIAP BACA sekarang juga.');
+                alert('✅ INSTAN BERHASIL! Buku SIAP BACA sekarang juga.');
 
-                // 2. PROSES UPLOAD FILE ASLI DI BACKGROUND (TIDAK MENGGANGGU USER)
                 const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
                 const pdfTask = pdfRef.put(pdfFile);
                 
@@ -312,7 +302,6 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 await pdfTask;
                 const pdfUrl = await pdfRef.getDownloadURL();
 
-                // Update data di Firestore jika sudah tuntas
                 await dbFirebase.collection('books').doc(bookId).update({
                     pdfUrl: pdfUrl,
                     coverUrl: coverUrl
@@ -321,7 +310,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 console.log('Sync Cloud Selesai!');
             } catch (err) {
                 console.error('Error:', err);
-                alert('❌ GAGAL! Periksa koneksi internet atau Rules Firebase kamu.');
+                alert('❌ GAGAL! Periksa koneksi internet atau Rules Firebase.');
             } finally {
                 progressContainer.classList.add('hidden');
                 saveBtn.innerText = originalText;
@@ -336,19 +325,14 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
         tempFiles = { pdf: null, cover: null };
 
-        // 3. FEEDBACK FORM SELESAI (1 DETIK)
-        e.target.reset();
-        document.getElementById('pdf-label').textContent = 'Unggah File PDF';
-        document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
-        tempFiles = { pdf: null, cover: null };
-
     } catch (err) {
         console.error('Error:', err);
         alert('Gagal memproses buku.');
-    } finally {
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
+};
+
 };
 
 async function deleteBook(id) {
@@ -458,8 +442,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('close-mobile-menu');
     const mobileMenu = document.getElementById('mobile-menu');
 
-    if (mobileBtn) mobileBtn.addEventListener('click', toggleMobileMenu);
-    if (closeBtn) closeBtn.addEventListener('click', toggleMobileMenu);
+    if (mobileBtn) mobileBtn.onclick = toggleMobileMenu;
+    if (closeBtn) closeBtn.onclick = toggleMobileMenu;
     if (mobileMenu) {
         mobileMenu.addEventListener('click', function (e) {
             if (e.target === this) toggleMobileMenu();
