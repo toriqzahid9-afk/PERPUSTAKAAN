@@ -235,19 +235,26 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         const tempId = 'temp_' + Date.now();
         const tempBook = {
             id: tempId,
-            title: title + ' (MENGUNGGAH...)',
+            title: title + ' (SEDANG MENYIMPAN...)',
             author: author,
             coverUrl: coverFile ? URL.createObjectURL(coverFile) : null,
             isUploading: true
         };
 
-        // Masukkan ke daftar antrean lokal agar tidak hilang saat sinkronisasi
+        // Masukkan ke antrean agar terlihat instan
         localPendingBooks.unshift(tempBook);
-        loadBooksFromDB(); // Trigger penggabungan data
+        render(); 
 
         progressContainer.classList.remove('hidden');
         progressBar.style.width = '10%';
         saveBtn.innerText = 'MEMPROSES...';
+
+        // PENGAMAN: Jangan biarkan user refresh saat upload
+        const preventRefresh = (e) => {
+            e.preventDefault();
+            e.returnValue = 'Buku sedang diupload, jangan refresh dulu bro!';
+        };
+        window.addEventListener('beforeunload', preventRefresh);
 
         // 2. JALANKAN UPLOAD ASLI DI BACKGROUND
         const startUpload = async () => {
@@ -259,6 +266,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                 pdfTask.on('state_changed', (snap) => {
                     const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
                     progressBar.style.width = p + '%';
+                    saveBtn.innerText = `MENGUNGGAH ${p}%`;
                 });
 
                 await pdfTask;
@@ -272,7 +280,7 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
                     coverUrl = await coverRef.getDownloadURL();
                 }
 
-                // Simpan ke Firestore
+                // Simpan ke Firestore (INI YANG MEMBUAT PERMANEN)
                 const newBook = {
                     title: title,
                     author: author,
@@ -283,19 +291,30 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 
                 await dbFirebase.collection('books').add(newBook);
                 
-                // Hapus dari antrean lokal karena sudah masuk ke database online
+                // BERHASIL! Hapus dari antrean lokal
                 localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
-                // loadBooksFromDB akan otomatis terpanggil oleh onSnapshot dari Firebase
+                alert('✅ BERHASIL TERSEDIA PERMANEN! Sekarang kamu boleh refresh atau keluar.');
                 
             } catch (err) {
                 console.error('Upload Gagal:', err);
                 localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
-                loadBooksFromDB();
-                alert('Gagal mengunggah ' + title);
+                alert('❌ GAGAL SIMPAN! Cek kuota atau Rules Firebase kamu.');
             } finally {
                 progressContainer.classList.add('hidden');
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
+                window.removeEventListener('beforeunload', preventRefresh); // Lepas pengaman
+                render();
             }
         };
+
+        startUpload();
+
+        // 3. KOSONGKAN FORM (TAPI JANGAN REFRESH!)
+        e.target.reset();
+        document.getElementById('pdf-label').textContent = 'Unggah File PDF';
+        document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
+        tempFiles = { pdf: null, cover: null };
 
         startUpload();
 
