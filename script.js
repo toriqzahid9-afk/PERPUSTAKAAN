@@ -213,16 +213,11 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
     const progressBar = document.getElementById('upload-progress-bar');
 
     try {
-        // 1. VALIDASI & PERSIAPAN
+        // 1. VALIDASI
         if (!tempFiles.pdf || !tempFiles.pdf.blob) {
             alert('Pilih file PDF terlebih dahulu!');
             return;
         }
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = 'MENYIAPKAN...';
-        progressContainer.classList.remove('hidden');
-        progressBar.style.width = '5%';
 
         const title = document.getElementById('add-title').value.trim();
         const author = document.getElementById('add-author').value.trim();
@@ -230,78 +225,78 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         const coverFile = tempFiles.cover;
         const timestamp = Date.now();
 
-        // 2. PARALLEL UPLOAD (PDF & COVER)
-        // Kita siapkan tugas upload-nya
-        const pdfRef = storageFirebase.ref(`books/pdf_${timestamp}_${title.replace(/\s+/g, '_')}`);
-        const pdfTask = pdfRef.put(pdfFile);
+        // 2. SIMPAN METADATA INSTAN (HANYA 1 DETIK)
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'MENYIMPAN...';
 
-        // Update progress bar berdasarkan upload PDF (karena paling besar)
-        pdfTask.on('state_changed', (snap) => {
-            const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 90);
-            progressBar.style.width = (5 + p) + '%';
-            saveBtn.innerText = `UPLOADING ${p}%...`;
-        });
-
-        // Proses Cover (Kompres dulu baru upload)
-        const uploadCover = async () => {
-            if (!coverFile) return null;
-            
-            // Kompresi Gambar
-            const compressedBlob = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(coverFile);
-                reader.onload = (ev) => {
-                    const img = new Image();
-                    img.src = ev.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const scale = 400 / img.width;
-                        canvas.width = 400;
-                        canvas.height = img.height * scale;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
-                    };
-                };
-            });
-
-            const coverRef = storageFirebase.ref(`covers/cover_${timestamp}.jpg`);
-            await coverRef.put(compressedBlob);
-            return await coverRef.getDownloadURL();
-        };
-
-        // JALANKAN BARENGAN (PDF & COVER)
-        const [pdfUrl, coverUrl] = await Promise.all([
-            pdfTask.then(() => pdfRef.getDownloadURL()),
-            uploadCover()
-        ]);
-
-        // 3. SIMPAN METADATA KE FIRESTORE (SINGLE HIT)
-        await dbFirebase.collection('books').add({
+        const docRef = await dbFirebase.collection('books').add({
             title: title,
             author: author,
-            pdfUrl: pdfUrl,
-            coverUrl: coverUrl,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'ready'
+            status: 'ready' // Langsung set ready agar bisa dibaca di alat ini
         });
 
-        // 4. CLEAN UP & SUCCESS
-        progressBar.style.width = '100%';
-        alert('✅ BERHASIL! Buku telah tersimpan permanen di cloud.');
+        const bookId = docRef.id;
         
+        // Simpan ke memori permanen HP agar bisa dibaca tanpa nunggu upload
+        saveToLocalDisk(bookId, pdfFile);
+
+        alert('✅ BERHASIL! Buku sudah masuk koleksi. File asli sedang diupload di background.');
+        
+        // RESET FORM SEGERA (Sesuai permintaan)
         e.target.reset();
         document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
+        const currentPdf = pdfFile; // Copy untuk background task
+        const currentCover = coverFile;
         tempFiles = { pdf: null, cover: null };
-
-    } catch (err) {
-        console.error('Upload Error:', err);
-        alert('❌ GAGAL MENYIMPAN: ' + err.message);
-    } finally {
         saveBtn.disabled = false;
         saveBtn.innerText = originalText;
-        setTimeout(() => progressContainer.classList.add('hidden'), 2000);
+
+        // 3. PROSES UPLOAD ASLI DI LATAR BELAKANG (BACKGROUND)
+        (async () => {
+            try {
+                console.log('Background upload dimulai...');
+                const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
+                const pdfTask = pdfRef.put(currentPdf);
+                
+                let coverUrl = null;
+                if (currentCover) {
+                    const canvas = document.createElement('canvas');
+                    const img = new Image();
+                    img.src = URL.createObjectURL(currentCover);
+                    const compressedBlob = await new Promise(res => {
+                        img.onload = () => {
+                            const ctx = canvas.getContext('2d');
+                            const scale = 400 / img.width;
+                            canvas.width = 400; canvas.height = img.height * scale;
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            canvas.toBlob(res, 'image/jpeg', 0.7);
+                        }
+                    });
+                    const coverRef = storageFirebase.ref(`covers/cover_${bookId}.jpg`);
+                    await coverRef.put(compressedBlob);
+                    coverUrl = await coverRef.getDownloadURL();
+                }
+
+                await pdfTask;
+                const pdfUrl = await pdfRef.getDownloadURL();
+
+                await dbFirebase.collection('books').doc(bookId).update({
+                    pdfUrl: pdfUrl,
+                    coverUrl: coverUrl
+                });
+                console.log('Semua file tuntas di awan!');
+            } catch (err) {
+                console.error('Background Upload Error:', err);
+            }
+        })();
+
+    } catch (err) {
+        console.error('Error:', err);
+        alert('❌ GAGAL: ' + err.message);
+        saveBtn.disabled = false;
+        saveBtn.innerText = originalText;
     }
 };
 
