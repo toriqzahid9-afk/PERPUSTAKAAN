@@ -176,7 +176,6 @@ async function openBook(id) {
         closeReader();
     }
 }
-}
 
 function closeReader() {
     document.getElementById('reader-overlay').style.display = 'none';
@@ -331,8 +330,6 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;
     }
-};
-
 };
 
 async function deleteBook(id) {
