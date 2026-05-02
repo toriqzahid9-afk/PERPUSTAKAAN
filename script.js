@@ -67,12 +67,6 @@ async function openBook(id) {
     const book = books.find(b => b.id === id);
     if (!book) return;
 
-    // CEK: Jika buku masih proses upload, jangan izinkan buka
-    if (book.isUploading) {
-        alert('Sabar bro, buku ini masih dalam proses upload ke server. Tunggu sebentar ya!');
-        return;
-    }
-
     const overlay = document.getElementById('reader-overlay');
     const flipbook = document.getElementById('flipbook');
     const spinner = document.getElementById('loading-spinner');
@@ -81,8 +75,25 @@ async function openBook(id) {
     spinner.style.display = 'flex';
     try {
         console.log('Mencoba memuat buku:', book.title);
-
-        if (!book.pdfUrl) throw new Error('Maaf, file PDF untuk buku ini belum tersedia atau rusak.');
+        
+        let pdfData;
+        // --- TURBO CACHE: BUKA INSTAN DARI LOKAL ---
+        if (book.isUploading && tempFiles.pdf && tempFiles.pdf.blob) {
+            console.log('Menggunakan file lokal agar INSTAN');
+            pdfData = await tempFiles.pdf.blob.arrayBuffer();
+        } else {
+            if (!book.pdfUrl) {
+                if (book.isUploading) {
+                    alert('Sabar bro, file sedang dikirim ke awan. Tunggu notifikasi "BERHASIL" dulu ya!');
+                    overlay.style.display = 'none';
+                    return;
+                }
+                throw new Error('File PDF tidak ditemukan.');
+            }
+            // Load dari URL server
+            const response = await fetch(book.pdfUrl);
+            pdfData = await response.arrayBuffer();
+        }
         
         // Hancurkan instance turn.js sebelumnya jika ada
         try { $(flipbook).turn('destroy'); } catch (e) { }
@@ -92,11 +103,8 @@ async function openBook(id) {
             throw new Error('Library PDF.js belum dimuat. Periksa koneksi internet Anda.');
         }
 
-        // Karena sudah online, PDF bisa langsung dimuat dari URL
-        if (!book.pdfUrl) throw new Error('URL PDF tidak ditemukan pada objek buku.');
-
-        // Muat dari Firebase Storage URL
-        const pdf = await pdfjsLib.getDocument(book.pdfUrl).promise;
+        // Muat data PDF
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
 
         console.log('PDF berhasil dimuat. Jumlah halaman:', pdf.numPages);
 
