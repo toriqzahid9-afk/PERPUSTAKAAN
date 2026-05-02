@@ -62,6 +62,12 @@ async function openBook(id) {
     const book = books.find(b => b.id === id);
     if (!book) return;
 
+    // CEK: Jika buku masih proses upload, jangan izinkan buka
+    if (book.isUploading) {
+        alert('Sabar bro, buku ini masih dalam proses upload ke server. Tunggu sebentar ya!');
+        return;
+    }
+
     const overlay = document.getElementById('reader-overlay');
     const flipbook = document.getElementById('flipbook');
     const spinner = document.getElementById('loading-spinner');
@@ -71,6 +77,8 @@ async function openBook(id) {
     try {
         console.log('Mencoba memuat buku:', book.title);
 
+        if (!book.pdfUrl) throw new Error('Maaf, file PDF untuk buku ini belum tersedia atau rusak.');
+        
         // Hancurkan instance turn.js sebelumnya jika ada
         try { $(flipbook).turn('destroy'); } catch (e) { }
         flipbook.innerHTML = '';
