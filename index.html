@@ -1,268 +1,360 @@
 <!DOCTYPE html>
+
 <html lang="id">
 
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perpustakaan Digital - Delpik</title>
-    <meta name="description" content="Delpik Digital - Koleksi buku digital terpercaya. Baca langsung tanpa download.">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Delpik Digital - Membaca adalah Jendela Dunia</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "on-background": "#00f2ff",
+                        "on-error": "#690005",
+                        "primary": "#00f2ff",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "on-surface-variant": "#00f2ff",
+                        "surface-container": "#201f1f",
+                        "on-secondary-container": "#00f2ff",
+                        "on-primary-container": "#006a71",
+                        "on-tertiary-container": "#9b00d2",
+                        "tertiary-fixed-dim": "#ecb2ff",
+                        "surface-container-low": "#1c1b1b",
+                        "primary-container": "#00f2ff",
+                        "tertiary-container": "#f5ceff",
+                        "secondary-container": "#0043eb",
+                        "on-tertiary": "#520071",
+                        "tertiary-fixed": "#f8d8ff",
+                        "on-primary": "#00363a",
+                        "surface-variant": "#353534",
+                        "secondary": "#b8c3ff",
+                        "on-secondary": "#002388",
+                        "inverse-on-surface": "#313030",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary": "#fff5fc",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#001356",
+                        "on-secondary-fixed-variant": "#0035be",
+                        "outline": "#00f2ff",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#dde1ff",
+                        "background": "#131313",
+                        "surface-bright": "#393939",
+                        "outline-variant": "#3a494b",
+                        "on-tertiary-fixed-variant": "#74009f",
+                        "on-tertiary-fixed": "#320047",
+                        "primary-fixed": "#74f5ff",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-dim": "#131313",
+                        "inverse-primary": "#00696f",
+                        "on-surface": "#00f2ff",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#004f54",
+                        "surface-tint": "#00dbe7",
+                        "primary-fixed-dim": "#00dbe7",
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary-fixed": "#002022"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "sm": "12px",
+                        "md": "24px",
+                        "unit": "8px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "xl": "80px",
+                        "lg": "48px",
+                        "margin": "32px",
+                        "stack-sm": "12px",
+                        "stack-md": "24px",
+                        "stack-lg": "48px",
+                        "py-stack-lg": "48px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Manrope"],
+                        "h1": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "headline-xl": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h3": ["24px", { "lineHeight": "1.4", "letterSpacing": "0em", "fontWeight": "600" }],
+                        "h1": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "h2": ["32px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    },
+                    "animation": {
+                        "glow-pulse": "glow-pulse 3s infinite ease-in-out"
+                    },
+                    "keyframes": {
+                        "glow-pulse": {
+                            "0%, 100%": { "text-shadow": "0 0 10px rgba(0, 242, 255, 0.4)" },
+                            "50%": { "text-shadow": "0 0 20px rgba(0, 242, 255, 0.8), 0 0 30px rgba(0, 242, 255, 0.4)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
 
-    <!-- Google Fonts: Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
-    <!-- Custom Stylesheet -->
-    <link rel="stylesheet" href="style.css">
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass {
+            background: rgba(0, 242, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+        }
+
+        .glass-input {
+            background: rgba(0, 242, 255, 0.03);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        .glow-text {
+            color: #00f2ff;
+            animation: glow-pulse 3s infinite ease-in-out;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+            background-color: #131313;
+        }
+    </style>
 </head>
 
-<body>
-
-    <!-- ============================================= -->
-    <!--   OVERLAY READER (FLIPBOOK)                   -->
-    <!-- ============================================= -->
-    <div id="reader-overlay">
-        <div class="close-reader" onclick="closeReader()">
-            <i class="fas fa-times"></i>
-        </div>
-
-        <!-- Spinner Loading -->
-        <div id="loading-spinner" class="loader-overlay">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mb-4"></div>
-            <p class="text-cyan-500 text-sm animate-pulse">Menyiapkan Pengalaman Membaca...</p>
-        </div>
-
-        <!-- Flipbook -->
-        <div id="flipbook-container">
-            <div class="book-body">
-                <div id="flipbook"></div>
-            </div>
-        </div>
-
-        <!-- Kontrol Navigasi Halaman -->
-        <div class="reader-controls">
-            <button class="nav-btn" onclick="$('#flipbook').turn('previous')">
-                <i class="fas fa-chevron-left mr-2"></i> Sebelumnya
-            </button>
-            <span id="page-number" class="text-xs self-center text-gray-400">Hal. 1</span>
-            <button class="nav-btn" onclick="$('#flipbook').turn('next')">
-                Selanjutnya <i class="fas fa-chevron-right ml-2"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- ============================================= -->
-    <!--   NAVIGASI (NAVBAR)                           -->
-    <!-- ============================================= -->
-    <nav class="glass-nav fixed top-0 w-full z-50">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-
-            <!-- Logo -->
-            <div onclick="handleLogoClick(); if(window.innerWidth < 768) toggleMobileMenu();" class="flex items-center space-x-3 cursor-pointer group z-[60]">
-                <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center text-black shadow-lg shadow-cyan-500/20 group-hover:rotate-12 transition pointer-events-none">
-                    <i class="fas fa-book-open text-xl"></i>
-                </div>
-                <span class="text-xl font-bold tracking-tighter pointer-events-none">DELPIK <span class="neon-text">DIGITAL</span></span>
-            </div>
-
-            <!-- Menu (Desktop) -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="javascript:void(0)" onclick="showPage('main-view')" class="text-sm font-medium hover:text-cyan-400 transition">Beranda</a>
-                <a href="#katalog-section" onclick="showPage('main-view')" class="text-sm font-medium hover:text-cyan-400 transition">Koleksi</a>
-
-                <a href="javascript:void(0)" id="login-link" onclick="showPage('login')" class="text-sm font-medium hover:text-cyan-400 transition">Masuk</a>
-
-                <a href="javascript:void(0)" id="admin-link" onclick="showPage('admin-dashboard')" class="hidden text-sm font-bold text-yellow-400">
-                    <i class="fas fa-grid-2 mr-1"></i> Dashboard
-                </a>
-                <button id="logout-btn" onclick="logout()" class="hidden text-xs bg-red-500/20 text-red-500 px-3 py-1 rounded border border-red-500/30">
-                    Keluar
+<body class="bg-surface font-body-md text-primary min-h-[884px] flex flex-col antialiased">
+    <!-- TopAppBar -->
+    <header class="bg-surface/80 backdrop-blur-md border-b border-primary/20 docked full-width top-0 sticky z-50">
+        <div class="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
+            <div class="flex items-center gap-4">
+                <button
+                    class="active:opacity-70 transition-opacity p-2 hover:bg-primary/10 transition-colors rounded-full">
+                    <span class="material-symbols-outlined text-primary">menu</span>
                 </button>
+                <span class="font-h1 antialiased tracking-tight text-lg font-extrabold text-primary">Delpik
+                    Digital</span>
             </div>
-
-            <!-- Hamburger Button (Mobile) -->
-            <div class="md:hidden flex items-center">
-                <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="text-white text-2xl p-2 focus:outline-none cursor-pointer">
-                    <i class="fas fa-bars pointer-events-none"></i>
+            <div class="flex items-center gap-2">
+                <button
+                    class="active:opacity-70 transition-opacity p-2 hover:bg-primary/10 transition-colors rounded-full">
+                    <span class="material-symbols-outlined text-primary">search</span>
                 </button>
             </div>
         </div>
-
-        <div id="mobile-menu" class="mobile-nav-overlay">
-            <div class="mobile-nav-content">
-                <button id="close-mobile-menu" onclick="toggleMobileMenu()" class="absolute top-4 right-4 text-cyan-400 text-3xl p-6 cursor-pointer z-[2000]">
-                    <i class="fas fa-times pointer-events-none"></i>
-                </button>
-                <a href="javascript:void(0)" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400 text-lg font-bold py-2">BERANDA</a>
-                <a href="#katalog-section" onclick="closeAndShowPage('main-view')" class="text-white hover:text-cyan-400 text-lg font-bold py-2">KOLEKSI</a>
-                
-                <a href="javascript:void(0)" id="login-link-mobile" onclick="closeAndShowPage('login')" class="text-white hover:text-cyan-400 text-lg font-bold py-2">MASUK</a>
-
-                <a href="javascript:void(0)" id="admin-link-mobile" onclick="closeAndShowPage('admin-dashboard')" class="hidden text-yellow-400 text-lg font-bold py-2">DASHBOARD</a>
-                <button id="logout-btn-mobile" onclick="logout(); toggleMobileMenu();" class="hidden text-red-500 text-lg font-bold py-2">KELUAR</button>
+    </header>
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="relative overflow-hidden px-margin py-stack-lg lg:py-24">
+            <!-- Decorative Background Glow -->
+            <div
+                class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full -z-10 translate-x-1/2 -translate-y-1/2">
             </div>
-        </div>
-    </nav>
-
-    <!-- ============================================= -->
-    <!--   KONTEN UTAMA                                -->
-    <!-- ============================================= -->
-    <main class="pt-20 pb-20 px-6">
-        <div class="max-w-7xl mx-auto">
-
-            <!-- ===== PAGE: BERANDA ===== -->
-            <div id="main-view" class="spa-content active">
-
-                <!-- Hero -->
-                <section class="hero-section">
-                    <h1 class="hero-title">
-                        Membaca adalah <br>
-                        <span class="neon-text">Jendela Dunia</span>
+            <div class="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+                <div class="lg:col-span-7 z-10">
+                    <h1 class="font-headline-xl text-headline-xl mb-stack-sm max-w-xl glow-text">
+                        Membaca adalah Jendela Dunia
                     </h1>
-                    <p class="hero-subtitle">selamat datang di web koleksi buku digital terpercaya.</p>
-                </section>
-
-                <!-- Header Katalog + Search -->
-                <header id="katalog-section" class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-t border-white/5 pt-12">
+                    <p class="font-body-lg text-body-lg text-primary/80 mb-stack-lg max-w-lg">
+                        Akses ribuan koleksi literatur digital, jurnal ilmiah, dan karya sastra klasik langsung dari
+                        perangkat Anda.
+                    </p>
+                    <!-- Search Bar -->
+                    <div class="relative max-w-xl group">
+                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-primary">search</span>
+                        </div>
+                        <input
+                            class="w-full pl-12 pr-4 py-4 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-body-md shadow-sm text-black placeholder-gray-400"
+                            placeholder="Cari literatur..." type="text" />
+                    </div>
+                </div>
+                <div class="lg:col-span-5 relative hidden lg:block">
+                    <div class="w-full aspect-square rounded-3xl overflow-hidden shadow-2xl border border-primary/20">
+                        <img alt="Library Interior" class="w-full h-full object-cover opacity-80"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBF4kk7Xq67CVqF52SFBGEjRLWubag2lWmcmdp9eTH7ieDjcmnOL1ALPk2MY9wkWxL-3wVWvfBUVDaCGOOngmaLZWp4kuMs5-q79xCWUTmKZdZ-0RVB1kFKaw2oNDtumyRKJj97wvBiFL2oaXl45WV1xUmBoArMGw3gZNN3-0AL37VeHmnm2VEygEHAfRqnfW6X3AEuUdtWm5NWasZ6dKLaDfNZNpAOaeY9JAt98TrHxWkI82bF1eMmmayGcNtTpFeiBNX51Mdpxdz" />
+                    </div>
+                    <div
+                        class="absolute -bottom-6 -left-6 w-32 h-32 bg-primary/20 rounded-2xl -z-10 opacity-40 blur-xl">
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Horizontal Scrolling: Koleksi Buku -->
+        <section class="py-stack-lg">
+            <div class="max-w-[1440px] mx-auto px-margin">
+                <div class="flex justify-between items-end mb-stack-md">
                     <div>
-                        <h2 class="text-3xl font-bold">Koleksi <span class="neon-text">Buku</span></h2>
-                        <p class="text-gray-500 text-sm mt-1">Klik pada buku untuk mulai membaca tanpa download.</p>
+                        <h2 class="font-headline-md text-headline-md text-primary glow-text">Koleksi Buku</h2>
+                        <p class="font-body-sm text-primary/70">Pilihan terbaik untuk pengembangan diri Anda hari ini.
+                        </p>
                     </div>
-                    <div class="relative w-full md:w-80">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"></i>
-                        <input type="text" id="search-input" placeholder="Cari literatur..."
-                            class="w-full bg-[#161616] border border-white/5 rounded-xl py-3 pl-12 pr-4 focus:border-cyan-500 outline-none transition text-sm">
-                    </div>
-                </header>
-
-                <!-- Grid Buku -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6" id="book-grid">
-                    <!-- Buku di-render oleh script.js -->
+                    <a class="text-primary font-label-md hover:underline flex items-center gap-1" href="#">
+                        Lihat Semua <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </a>
                 </div>
-
-                <!-- PRESERVATION FOOTER -->
-                <div class="preservation-container">
-                    <div class="preservation-title">
-                        <div class="w-7 h-7 bg-cyan-500 rounded flex items-center justify-center text-black text-[11px]">
-                            <i class="fas fa-book-open"></i>
+                <div class="flex gap-gutter overflow-x-auto no-scrollbar pb-6 -mx-margin px-margin">
+                    <!-- Book Card 1 -->
+                    <div class="min-w-[200px] w-[200px] group cursor-pointer">
+                        <div
+                            class="aspect-[2/3] rounded-lg overflow-hidden glass mb-stack-sm transition-transform group-hover:-translate-y-2 group-hover:border-primary/50">
+                            <img alt="Philosophy of Mind" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCygFg2MCCOmJu_Ou7B0ovX4rBZ8HMeeIvI38pl_drVAfdkVNgaEXWWJZxFC1rJLeo6zsfnIQ9uGOwoabvSIAdPcuwJqBBc1-a_-iabfeAzQjvniaEHQehNmrV38R-yf7d8JYAKFHv95cWh8BCiB1zVDSJ2pvYdRlgGQAtAZIAtj5aruCsjGLGbacViGaY57FBMZGO_0rexwNbEJWmFMylj6zo9KoCaRImIxb-7XJROlUGhNpDbqtpJ1rCPGqxmeaNbNQoC8J4sYDGc" />
                         </div>
-                        <span class="uppercase">PERPUSTAKAAN <span class="neon-text">DELPIK</span></span>
+                        <h3 class="font-headline-md text-sm font-semibold text-primary line-clamp-2 leading-tight">
+                            Filosofi Teras</h3>
+                        <p class="font-body-sm text-xs text-primary/60 mt-1">Henry Manampiring</p>
                     </div>
-                    <p class="preservation-subtext">Koleksi Digital Publik V2.1</p>
+                    <!-- Book Card 2 -->
+                    <div class="min-w-[200px] w-[200px] group cursor-pointer">
+                        <div
+                            class="aspect-[2/3] rounded-lg overflow-hidden glass mb-stack-sm transition-transform group-hover:-translate-y-2 group-hover:border-primary/50">
+                            <img alt="Digital Strategy" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5e1qUHncmVH-wfX0IWhJ0LU5HPx7hcCh9fVBjBAspSB7NhVKJciSB-lLryw_Bydbnv9VUdqjhkKRKdGNKlbbmVBixbGp0kZfylwyQt9sAHko9yvbTY-URXRZTlzr1J7fs7qZ_Czh5tEio2lKkvrcx3ac10CorEpPSSgtygTf4XzxOI3Ft0roxBMzPO-kH9CIfgxVKQSGkiyRsSKPPUOsoi4F3i1bqzwSnGVeKtvWPFA4eBeBoWA79I-yilg6ljZ9a7vTIsF0stJDM" />
+                        </div>
+                        <h3 class="font-headline-md text-sm font-semibold text-primary line-clamp-2 leading-tight">
+                            Digital Strategy 2024</h3>
+                        <p class="font-body-sm text-xs text-primary/60 mt-1">Sarah Jenkins</p>
+                    </div>
+                    <!-- Book Card 3 -->
+                    <div class="min-w-[200px] w-[200px] group cursor-pointer">
+                        <div
+                            class="aspect-[2/3] rounded-lg overflow-hidden glass mb-stack-sm transition-transform group-hover:-translate-y-2 group-hover:border-primary/50">
+                            <img alt="World Literature" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe8l2m7084OPVpoU12S8qm0TlcSNdErx4933extHI58KB5H62tUUrJ2m3BqE5955fJITDVU7CBpzFAFA-UXUzlfosDIPiXkEOxEzRW2GiucJT993oJq3HKcF2fA99fMZ-I_XB9E7TY_CmkpK9SOH0VZSMACAR7MM_2E5yfwiaD9s36wBgZiXnN-PO7e-thfhCKbBlNy95RDudm4t5wu4FWGXzPhpfgkVDaSsLqFfj5xU_Kq_GOI0R4wBVBjlQNRKYSbiR27upTtJ31" />
+                        </div>
+                        <h3 class="font-headline-md text-sm font-semibold text-primary line-clamp-2 leading-tight">
+                            Jendela Dunia Sastra</h3>
+                        <p class="font-body-sm text-xs text-primary/60 mt-1">Ahmad Fuadi</p>
+                    </div>
+                    <!-- Book Card 4 -->
+                    <div class="min-w-[200px] w-[200px] group cursor-pointer">
+                        <div
+                            class="aspect-[2/3] rounded-lg overflow-hidden glass mb-stack-sm transition-transform group-hover:-translate-y-2 group-hover:border-primary/50">
+                            <img alt="Architecture" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuClidIMB35nyZ68Wp3Ij0oJTzFTeokEszUqJKo5Z-GmGytCqswasFh2sNjrQGRg4l4LG9mrgzhsLyNkAYsquksl9P9Ov_3W7iTb1i1W5J3TL1vKXQXVEW0nsgXSaaAyyGdkMQvkvYk-HA6VcEeE7NcE6j2ygmGLnuQt2MX2q7wy2jpbTx89RNTuRI5jiuN-hAdXGp9Hj_K3BzMCmCY8oiRusyEH_yVeamXw34FBV5KLr_ODXZKEtUngcmOwKSkLoF43FLWSqDG7p-jk" />
+                        </div>
+                        <h3 class="font-headline-md text-sm font-semibold text-primary line-clamp-2 leading-tight">
+                            Arsitektur Modern</h3>
+                        <p class="font-body-sm text-xs text-primary/60 mt-1">Renzo Piano</p>
+                    </div>
                 </div>
-
             </div>
-
-            <!-- ===== PAGE: LOGIN ===== -->
-            <div id="login" class="spa-content">
-                <div class="max-w-md mx-auto mt-20 bg-[#161616] p-10 rounded-2xl border border-white/5 text-center shadow-2xl">
-                    <h2 class="text-3xl font-bold mb-2">Panel <span class="neon-text">Admin</span></h2>
-                    <p class="text-gray-600 text-xs mb-8">Masuk dengan akun administrator Anda.</p>
-
-                    <form id="login-form" class="text-left space-y-4">
-                        <input type="email" id="email" required placeholder="admin@perpus.id"
-                            class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none focus:border-cyan-500 text-sm">
-                        <input type="password" id="password" required placeholder="••••••"
-                            class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none focus:border-cyan-500 text-sm">
-                        <button type="submit" class="w-full bg-cyan-500 text-black font-bold py-4 rounded-xl hover:bg-cyan-400 transition">
-                            MASUK
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- ===== PAGE: ADMIN DASHBOARD ===== -->
-            <div id="admin-dashboard" class="spa-content">
-                <div class="flex justify-between items-center mb-10 pt-20">
-                    <h2 class="text-3xl font-bold">Panel <span class="neon-text">Manajer</span></h2>
-                    <button onclick="logout()" class="text-xs bg-red-500/20 text-red-500 px-4 py-2 rounded-lg border border-red-500/30 font-bold">
-                        KELUAR ADMIN
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-                    <!-- Form Tambah Buku -->
-                    <div class="lg:col-span-4">
-                        <div class="bg-[#161616] p-6 rounded-2xl border border-white/5 lg:sticky lg:top-28">
-                            <h3 class="font-bold mb-6 flex items-center text-cyan-400">
-                                <i class="fas fa-plus-circle mr-2"></i> Tambah Buku
+        </section>
+        <!-- Bento Grid for Categories -->
+        <section class="py-stack-lg">
+            <div class="max-w-[1440px] mx-auto px-margin">
+                <h2 class="font-headline-md text-headline-md mb-stack-md text-primary glow-text">Eksplorasi Kategori
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-gutter min-h-[400px]">
+                    <div
+                        class="md:col-span-2 md:row-span-2 glass rounded-2xl p-margin flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+                        <div class="z-10">
+                            <span
+                                class="bg-primary text-surface text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full">Populer</span>
+                            <h3 class="font-headline-lg text-headline-lg mt-4 glow-text text-primary">Pengembangan Diri
                             </h3>
-                            <form id="add-book-form" class="space-y-4">
-                                <input type="text" id="add-title" placeholder="Judul Buku" required
-                                    class="w-full bg-black border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-cyan-500">
-                                <input type="text" id="add-author" placeholder="Nama Penulis" required
-                                    class="w-full bg-black border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-cyan-500">
-
-                                <!-- Upload PDF -->
-                                <div class="upload-box" onclick="document.getElementById('pdf-input').click()">
-                                    <i class="fas fa-file-pdf text-2xl text-red-500 mb-1"></i>
-                                    <p id="pdf-label" class="text-[10px] text-gray-500">Unggah File PDF</p>
-                                    <input type="file" id="pdf-input" class="hidden" accept=".pdf"
-                                        onchange="handleFileChange(this, 'pdf-label')">
-                                </div>
-
-                                <!-- Upload Cover -->
-                                <div class="upload-box" onclick="document.getElementById('cover-input').click()">
-                                    <i class="fas fa-image text-2xl text-green-500 mb-1"></i>
-                                    <p id="cover-label" class="text-[10px] text-gray-500">Unggah Gambar Sampul</p>
-                                    <input type="file" id="cover-input" class="hidden" accept="image/*"
-                                        onchange="handleFileChange(this, 'cover-label')">
-                                </div>
-
-                                <!-- Progress Bar -->
-                                <div id="upload-progress-container" class="hidden w-full bg-black rounded-full h-2 mb-2 overflow-hidden border border-white/5">
-                                    <div id="upload-progress-bar" class="bg-cyan-500 h-full w-0 transition-all duration-300"></div>
-                                </div>
-
-                                <button type="submit" id="save-btn"
-                                    class="w-full bg-cyan-500 text-black font-bold py-3 rounded-lg text-sm hover:bg-cyan-400 transition">
-                                    SIMPAN KOLEKSI
-                                </button>
-                            </form>
+                            <p class="font-body-md text-primary/80 mt-2 max-w-xs">Temukan rahasia produktivitas dan
+                                kebahagiaan dari para ahli dunia.</p>
                         </div>
+                        <span
+                            class="material-symbols-outlined text-primary text-9xl absolute -bottom-8 -right-8 opacity-20 group-hover:scale-110 transition-transform">auto_stories</span>
                     </div>
-
-                    <!-- Tabel Daftar Buku -->
-                    <div class="lg:col-span-8">
-                        <div class="bg-[#161616] rounded-2xl overflow-hidden border border-white/5">
-                            <table class="w-full admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Buku</th>
-                                        <th>Penulis</th>
-                                        <th class="text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-book-list">
-                                    <!-- Di-render oleh script.js -->
-                                </tbody>
-                            </table>
+                    <div
+                        class="glass rounded-2xl p-6 flex flex-col justify-center items-center text-center group cursor-pointer hover:bg-primary/10 transition-colors">
+                        <span class="material-symbols-outlined text-4xl text-primary mb-2">science</span>
+                        <h4 class="font-label-md text-primary">Sains &amp; Teknologi</h4>
+                    </div>
+                    <div
+                        class="glass rounded-2xl p-6 flex flex-col justify-center items-center text-center group cursor-pointer hover:bg-primary/10 transition-colors">
+                        <span class="material-symbols-outlined text-4xl text-primary mb-2">history_edu</span>
+                        <h4 class="font-label-md text-primary">Sastra &amp; Seni</h4>
+                    </div>
+                    <div
+                        class="md:col-span-2 glass rounded-2xl p-margin flex items-center justify-between group cursor-pointer hover:border-primary/50 transition-all">
+                        <div>
+                            <h3 class="font-headline-md text-primary">Jurnal Ilmiah</h3>
+                            <p class="text-primary/70 text-sm mt-1">Akses database penelitian terbaru.</p>
                         </div>
+                        <span class="material-symbols-outlined text-primary text-4xl">travel_explore</span>
                     </div>
-
                 </div>
             </div>
-
-        </div>
+        </section>
     </main>
-
-    <!-- ============================================= -->
-    <!--   DEPENDENCIES (order matters)                -->
-    <!-- ============================================= -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
-
-    <!-- Firebase (Online Database) -->
-    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-storage-compat.js"></script>
-
-    <!-- Custom Script -->
-    <script src="script.js"></script>
-
+    <!-- Footer -->
+    <footer
+        class="border-t border-primary/20 w-full py-8 px-6 flex flex-col items-center gap-4 mt-auto mb-20 bg-surface">
+        <div class="flex gap-6">
+            <a class="font-manrope text-xs text-primary/60 hover:text-primary transition-colors" href="#">Privacy</a>
+            <a class="font-manrope text-xs text-primary/60 hover:text-primary transition-colors" href="#">Terms</a>
+            <a class="font-manrope text-xs text-primary/60 hover:text-primary transition-colors" href="#">Support</a>
+        </div>
+        <p class="font-manrope text-xs text-primary/40">© 2023 Delpik Digital v1.2.0</p>
+    </footer>
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav
+        class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 h-20 pb-safe bg-surface/90 backdrop-blur-lg border-t border-primary/20 shadow-xl rounded-t-xl">
+        <a class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-xl px-3 py-1 scale-95 transition-transform"
+            href="#">
+            <span class="material-symbols-outlined">home</span>
+            <span class="font-h1 text-[11px] font-medium">Home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-primary/60 hover:text-primary transition-colors scale-95"
+            href="library.html">
+            <span class="material-symbols-outlined">local_library</span>
+            <span class="font-h1 text-[11px] font-medium">Library</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-primary/60 hover:text-primary transition-colors scale-95"
+            href="library.html">
+            <span class="material-symbols-outlined">explore</span>
+            <span class="font-h1 text-[11px] font-medium">Discover</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-primary/60 hover:text-primary transition-colors scale-95"
+            href="discover.html">
+            <span class="material-symbols-outlined">person</span>
+            <span class="font-h1 text-[11px] font-medium">Profile</span>
+        </a>
+    </nav>
 </body>
+
 </html>

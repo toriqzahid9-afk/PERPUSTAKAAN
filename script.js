@@ -8,47 +8,37 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 // --- STATE GLOBAL ---
 let books = [];
-let isAdmin = false;
+let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 let tempFiles = { pdf: null, cover: null };
+let uploadTasksCount = 0;
+
+window.addEventListener('beforeunload', (e) => {
+    if (uploadTasksCount > 0) {
+        e.preventDefault();
+        e.returnValue = 'Buku sedang di-upload ke server. Jika Anda keluar, upload akan gagal. Yakin ingin keluar?';
+    }
+});
 
 // =============================================
-//   FIREBASE CONFIGURATION
+//   API CONFIGURATION
 // =============================================
-const firebaseConfig = {
-  apiKey: "AIzaSyBV_wDXwj4OWplfjeFdkgW_91T60t2aXTY",
-  authDomain: "perpustakaandigital-46861.firebaseapp.com",
-  projectId: "perpustakaandigital-46861",
-  storageBucket: "perpustakaandigital-46861.firebasestorage.app",
-  messagingSenderId: "884650687443",
-  appId: "1:884650687443:web:2c757bde39908cc7524d26",
-  measurementId: "G-LCWNRT59KT"
-};
-
-let dbFirebase, storageFirebase;
-try {
-    firebase.initializeApp(firebaseConfig);
-    dbFirebase = firebase.firestore();
-    storageFirebase = firebase.storage();
-} catch (e) {
-    console.warn("Firebase belum dikonfigurasi.", e);
-}
+// Isi dengan URL backend PHP kamu jika di-host terpisah, misalnya 'https://api.domain.com/'
+// Biarkan kosong jika di folder yang sama.
+const API_URL = ''; 
 
 // =============================================
-//   DATABASE (Firebase)
+//   DATABASE (API)
 // =============================================
 async function initDB() {
-    if (!dbFirebase) return;
     loadBooksFromDB();
 }
 
 let localPendingBooks = []; // Penampung buku yang sedang diupload
 
 async function loadBooksFromDB() {
-    if (!dbFirebase) return;
-    
-    // Sinkronisasi Real-time
-    dbFirebase.collection('books').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        const serverBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+        const response = await fetch(API_URL + 'get_books.php');
+        const serverBooks = await response.json();
         
         // Hapus dari localPending jika sudah ada di server
         localPendingBooks = localPendingBooks.filter(local => !serverBooks.find(server => server.id === local.id));
@@ -56,10 +46,10 @@ async function loadBooksFromDB() {
         // Gabungkan buku server dengan buku yang masih proses upload di HP ini
         books = [...localPendingBooks, ...serverBooks];
         render();
-        console.log("Data sinkron!");
-    }, (error) => {
-        console.error("Gagal sinkronisasi:", error);
-    });
+        console.log("Data sukses diambil dari API!");
+    } catch (error) {
+        console.error("Gagal sinkronisasi API:", error);
+    }
 }
 
 // --- SISTEM DISK LOKAL PERMANEN (INDEXEDDB) ---
@@ -107,30 +97,29 @@ async function openBook(id) {
     try {
         console.log('Mencoba memuat buku:', book.title);
         
-        // 1. INSTAN: BUKA DULU PAKAI SAMPUL
+        // 1. INSTAN: BUKA DULU PAKAI SAMPUL (STATIS SEMENTARA)
         try { $(flipbook).turn('destroy'); } catch (e) { }
         flipbook.innerHTML = '';
         
+        const isMobile = window.innerWidth < 768;
+        // Di mobile, ukuran buku persis sama dengan layar (Full Screen)
+        const bookWidth = Math.floor(isMobile ? window.innerWidth : (window.innerWidth > 1000 ? 960 : window.innerWidth * 0.85));
+        // Sisakan ruang sedikit untuk tombol di desktop, tapi full height di mobile
+        const bookHeight = Math.floor(isMobile ? window.innerHeight : (window.innerHeight * 0.75));
+
         const firstPageImg = document.createElement('div');
         firstPageImg.className = 'flipbook-page';
-        firstPageImg.innerHTML = `<img src="${getCoverUrl(book.coverUrl)}" style="width:100%;height:100%;object-fit:contain;">`;
+        // Style sementara agar gambar berada di tengah dengan ukuran seperti buku
+        firstPageImg.style.width = isMobile ? `${bookWidth}px` : `${bookWidth/2}px`;
+        firstPageImg.style.height = `${bookHeight}px`;
+        firstPageImg.style.margin = '0 auto';
+        firstPageImg.innerHTML = `<img src="${getCoverUrl(book.coverUrl)}" style="width:100%;height:100%;object-fit:contain;background-color:white;">`;
         flipbook.appendChild(firstPageImg);
 
-        const isMobile = window.innerWidth < 768;
-        const bookWidth = Math.floor(isMobile ? (window.innerWidth - 40) : (window.innerWidth > 1000 ? 960 : window.innerWidth * 0.85));
-        const bookHeight = Math.floor(isMobile ? (window.innerHeight * 0.8) : (window.innerHeight * 0.75));
+        spinner.style.display = 'none'; // Sembunyikan spinner karena cover sudah tampil
 
-        $(flipbook).turn({
-            width: bookWidth,
-            height: bookHeight,
-            autoCenter: true,
-            display: isMobile ? 'single' : 'double',
-            acceleration: true,
-            elevation: 50,
-            duration: 600
-        });
-
-        spinner.style.display = 'none';
+        // Anti-scroll di background
+        document.body.style.overflow = 'hidden';
 
         // 2. MUAT PDF DI BACKGROUND
         let loadingTask;
@@ -138,7 +127,8 @@ async function openBook(id) {
         if (localBlob) {
             loadingTask = pdfjsLib.getDocument({ data: await localBlob.arrayBuffer() });
         } else if (book.pdfUrl) {
-            loadingTask = pdfjsLib.getDocument(book.pdfUrl);
+            let fullPdfUrl = book.pdfUrl.startsWith('http') ? book.pdfUrl : API_URL + book.pdfUrl;
+            loadingTask = pdfjsLib.getDocument(fullPdfUrl);
         } else {
             console.warn("File belum ada di server.");
             return;
@@ -157,7 +147,30 @@ async function openBook(id) {
             return canvas;
         }
 
-        // Update hal 1 & tambah halaman lain
+        // Hitung total halaman yang benar untuk Turn.js (genap untuk mode double)
+        let totalPages = pdf.numPages;
+        if (!isMobile && totalPages % 2 !== 0) {
+            totalPages++; 
+        }
+
+        // Hapus styling sementara sebelum inisialisasi Turn.js
+        firstPageImg.style.width = '';
+        firstPageImg.style.height = '';
+        firstPageImg.style.margin = '';
+
+        // 3. INISIALISASI TURN.JS DENGAN JUMLAH HALAMAN YANG PASTI
+        $(flipbook).turn({
+            width: bookWidth,
+            height: bookHeight,
+            autoCenter: true,
+            display: isMobile ? 'single' : 'double',
+            acceleration: true,
+            elevation: 50,
+            duration: 600,
+            pages: totalPages // Set jumlah halaman sejak awal agar tidak ada error out of range
+        });
+
+        // 4. Update hal 1 & tambah halaman lain
         (async () => {
             const canvas1 = await renderPageToCanvas(1);
             $(flipbook).find('.flipbook-page').first().empty().append(canvas1);
@@ -169,7 +182,14 @@ async function openBook(id) {
                 pageDiv.className = 'flipbook-page';
                 pageDiv.appendChild(canvas);
                 $(flipbook).turn('addPage', pageDiv, i);
-                await new Promise(r => setTimeout(r, 50));
+                await new Promise(r => setTimeout(r, 50)); // Jeda agar UI tidak freeze
+            }
+
+            // Tambahkan halaman kosong di akhir jika total genap tapi pdf ganjil (hanya desktop)
+            if (!isMobile && pdf.numPages % 2 !== 0) {
+                const emptyPage = document.createElement('div');
+                emptyPage.className = 'flipbook-page bg-white';
+                $(flipbook).turn('addPage', emptyPage, totalPages);
             }
         })();
 
@@ -182,6 +202,7 @@ async function openBook(id) {
 
 function closeReader() {
     document.getElementById('reader-overlay').style.display = 'none';
+    document.body.style.overflow = ''; // Kembalikan scroll
     try {
         $('#flipbook').turn('destroy');
     } catch (e) { /* abaikan jika belum diinisialisasi */ }
@@ -226,98 +247,145 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
         const author = document.getElementById('add-author').value.trim();
         const pdfFile = tempFiles.pdf.blob;
         const coverFile = tempFiles.cover;
-        const timestamp = Date.now();
+        const tempId = 'temp_' + Date.now();
 
-        // 2. PROSES INSTAN DI LOKAL DULU
         saveBtn.disabled = true;
         saveBtn.innerText = 'MEMPROSES...';
         
-        let localCoverUrl = null;
+        // 2. PARALLEL PREPARATION (Kompresi Gambar & Setup Optimistic UI)
+        // Kita jalankan kompresi gambar secara paralel dengan persiapan UI
         let compressedBlob = null;
-        if (coverFile) {
-            // Kompresi Gambar agar super cepat
-            const canvas = document.createElement('canvas');
-            const img = new Image();
-            img.src = URL.createObjectURL(coverFile);
-            compressedBlob = await new Promise(res => {
-                img.onload = () => {
-                    const ctx = canvas.getContext('2d');
-                    const scale = 400 / img.width;
-                    canvas.width = 400; canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(res, 'image/jpeg', 0.7);
-                }
-            });
-            localCoverUrl = URL.createObjectURL(compressedBlob);
+        let localCoverUrl = null;
+
+        const prepareCoverPromise = async () => {
+            if (coverFile) {
+                const canvas = document.createElement('canvas');
+                const img = new Image();
+                img.src = URL.createObjectURL(coverFile);
+                compressedBlob = await new Promise(res => {
+                    img.onload = () => {
+                        const ctx = canvas.getContext('2d');
+                        const scale = Math.min(1, 400 / img.width); // Maksimal lebar 400px
+                        canvas.width = img.width * scale; 
+                        canvas.height = img.height * scale;
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        canvas.toBlob(res, 'image/jpeg', 0.6); // Kompresi agresif 60% quality
+                    }
+                });
+                localCoverUrl = URL.createObjectURL(compressedBlob);
+            }
+        };
+
+        const setupUIPromise = async () => {
+            // Optimistic UI: Tampilkan di UI seketika
+            const newBook = {
+                id: tempId,
+                title: title,
+                author: author,
+                coverUrl: localCoverUrl, // Akan diisi jika cover selesai
+                status: 'uploading',
+                createdAt: new Date()
+            };
+            localPendingBooks.push(newBook);
+            books = [newBook, ...books];
+            render();
+            // Simpan PDF ke cache lokal paralel
+            saveToLocalDisk(tempId, pdfFile);
+        };
+
+        // Eksekusi kompresi dan setup UI secara paralel!
+        await Promise.all([prepareCoverPromise(), setupUIPromise()]);
+
+        // Perbarui UI lagi karena localCoverUrl mungkin baru didapat dari promise
+        const pendingBookIndex = books.findIndex(b => b.id === tempId);
+        if (pendingBookIndex > -1) {
+            books[pendingBookIndex].coverUrl = localCoverUrl;
+            render();
         }
 
-        const newDocRef = dbFirebase.collection('books').doc();
-        const bookId = newDocRef.id;
-        
-        // Tambahkan ke UI secara instan!
-        const newBook = {
-            id: bookId,
-            title: title,
-            author: author,
-            coverUrl: localCoverUrl,
-            status: 'uploading',
-            createdAt: new Date()
-        };
-        
-        localPendingBooks.push(newBook);
-        books = [newBook, ...books]; // Munculkan paling atas sementara
-        render();
-        
-        // Simpan PDF ke cache lokal sementara
-        saveToLocalDisk(bookId, pdfFile);
-
-        alert('✅ BERHASIL! Buku ditambahkan. Proses upload berjalan di latar belakang.');
+        alert('✅ Persiapan selesai! Buku ditambahkan. Proses upload berjalan di latar belakang.');
         
         // RESET FORM SEGERA
         e.target.reset();
         document.getElementById('pdf-label').textContent = 'Unggah File PDF';
         document.getElementById('cover-label').textContent = 'Unggah Gambar Sampul';
-        const currentPdf = pdfFile; // Copy untuk background task
+        const currentPdf = pdfFile; 
         tempFiles = { pdf: null, cover: null };
         saveBtn.disabled = false;
         saveBtn.innerText = originalText;
 
-        // 4. PROSES UPLOAD ASLI DI LATAR BELAKANG (BACKGROUND)
-        (async () => {
-            try {
-                let coverUrl = null;
-                if (compressedBlob) {
-                    console.log('Background upload cover dimulai...');
-                    const coverRef = storageFirebase.ref(`covers/cover_${timestamp}.jpg`);
-                    await coverRef.put(compressedBlob);
-                    coverUrl = await coverRef.getDownloadURL();
-                }
+        // 3. API UPLOAD LOGIC (PROMISE-BASED WITH RETRY & TIMEOUT)
+        uploadTasksCount++;
+        progressContainer.classList.remove('hidden');
+        progressBar.style.width = '5%';
+        
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('author', author);
+        if (compressedBlob) {
+            formData.append('cover', compressedBlob, 'cover.jpg');
+        }
+        formData.append('pdf', currentPdf, currentPdf.name);
 
-                console.log('Background menyimpan metadata...');
-                await newDocRef.set({
-                    title: title,
-                    author: author,
-                    coverUrl: coverUrl,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'ready'
-                });
+        // Fungsi Promise untuk XHR (Mendukung Progress Bar & Timeout)
+        const uploadWithRetry = (url, data, retries = 3, timeoutMs = 30000) => {
+            return new Promise((resolve, reject) => {
+                const attempt = (n) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', url, true);
+                    xhr.timeout = timeoutMs;
+                    
+                    xhr.upload.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            const percent = (event.loaded / event.total) * 90; // Sisa 10% untuk server processing
+                            progressBar.style.width = (5 + percent) + '%';
+                        }
+                    };
+                    
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve(xhr.responseText);
+                        } else {
+                            if (n === 1) reject(new Error('Server Error: ' + xhr.status));
+                            else { console.warn(`Retrying... (${retries - n + 1})`); attempt(n - 1); }
+                        }
+                    };
+                    
+                    xhr.onerror = xhr.ontimeout = () => {
+                        if (n === 1) reject(new Error('Network Error / Timeout'));
+                        else { console.warn(`Retrying after error... (${retries - n + 1})`); attempt(n - 1); }
+                    };
+                    
+                    xhr.send(data);
+                };
+                attempt(retries);
+            });
+        };
 
-                console.log('Background upload PDF dimulai...');
-                const pdfRef = storageFirebase.ref(`books/pdf_${bookId}`);
-                await pdfRef.put(currentPdf);
-                const pdfUrl = await pdfRef.getDownloadURL();
-
-                await newDocRef.update({
-                    pdfUrl: pdfUrl
-                });
-                
-                // Hapus dari pending setelah selesai (opsional karena sudah di-handle oleh onSnapshot)
-                localPendingBooks = localPendingBooks.filter(b => b.id !== bookId);
-                console.log('Semua file tuntas di awan!');
-            } catch (err) {
-                console.error('Background Upload Error:', err);
+        // Mulai Upload ke Backend
+        try {
+            const responseText = await uploadWithRetry(API_URL + 'upload.php', formData, 3, 30000); // 3x Retry, 30s Timeout
+            const res = JSON.parse(responseText);
+            
+            if (res.success && res.book) {
+                saveToLocalDisk(res.book.id, currentPdf); // Simpan ID asli ke disk
             }
-        })();
+            
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                progressContainer.classList.add('hidden');
+                progressBar.style.width = '0%';
+            }, 2000);
+
+        } catch (uploadError) {
+            console.error('Upload API Error:', uploadError);
+            progressBar.style.backgroundColor = 'red'; // Indikator Error
+            setTimeout(() => { progressContainer.classList.add('hidden'); progressBar.style.backgroundColor = ''; }, 3000);
+        } finally {
+            localPendingBooks = localPendingBooks.filter(b => b.id !== tempId);
+            loadBooksFromDB(); // Sinkronisasi ulang data final dari server
+            uploadTasksCount--;
+        }
 
     } catch (err) {
         console.error('Error:', err);
@@ -330,8 +398,13 @@ document.getElementById('add-book-form').onsubmit = async (e) => {
 async function deleteBook(id) {
     if (!confirm('Hapus buku ini secara permanen?')) return;
     try {
-        await dbFirebase.collection('books').doc(id).delete();
-        // UI akan terupdate otomatis via onSnapshot
+        const response = await fetch(API_URL + 'delete.php?id=' + id);
+        const result = await response.json();
+        if (result.success) {
+            loadBooksFromDB();
+        } else {
+            alert('Gagal: ' + result.message);
+        }
     } catch (err) {
         console.error("Gagal menghapus:", err);
         alert("Gagal menghapus buku!");
@@ -344,7 +417,8 @@ async function deleteBook(id) {
 
 function getCoverUrl(coverUrl) {
     if (!coverUrl) return 'https://via.placeholder.com/150x220/222/00f2ff?text=DELPIK';
-    return coverUrl;
+    if (coverUrl.startsWith('http') || coverUrl.startsWith('blob:')) return coverUrl;
+    return API_URL + coverUrl;
 }
 
 function render() {
@@ -353,29 +427,39 @@ function render() {
 
     // --- Render kartu buku di halaman utama ---
     grid.innerHTML = books.map(b => `
-        <div class="book-card" onclick="openBook('${b.id}')" style="cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
-            <div class="book-cover-container">
-                <img src="${getCoverUrl(b.coverUrl)}"
-                     alt="Sampul ${b.title}">
-            </div>
-            <div class="flex flex-col justify-between py-2">
-                <div>
-                    <h4 class="font-bold text-white text-xs uppercase">${b.title}</h4>
-                    <p class="text-[10px] text-gray-500 mt-1">${b.author}</p>
+        <div class="flex flex-col group cursor-pointer" onclick="openBook('${b.id}')">
+            <div class="relative aspect-[3/4] rounded-lg overflow-hidden glass-card mb-stack-sm bg-surface-container">
+                <img alt="Sampul ${b.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${getCoverUrl(b.coverUrl)}"/>
+                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center px-4">
+                    <button class="w-full py-2 glow-button text-on-primary rounded-lg font-label-sm shadow-lg">Baca Sekarang</button>
                 </div>
-                <div class="text-[8px] text-cyan-500 font-bold tracking-widest mt-4">KLIK UNTUK MEMBACA</div>
             </div>
+            <h4 class="font-label-md text-label-md text-on-surface line-clamp-1">${b.title}</h4>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">${b.author}</p>
+            <div class="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-primary-container w-0"></div>
+            </div>
+            <span class="text-[10px] text-outline mt-1">Baru Ditambahkan</span>
         </div>
     `).join('');
 
     // --- Render tabel di dashboard admin ---
     list.innerHTML = books.map(b => `
-        <tr>
-            <td class="text-xs font-bold uppercase">${b.title}</td>
-            <td class="text-[10px] text-gray-500">${b.author}</td>
-            <td class="text-right">
-                <button onclick="deleteBook('${b.id}')" class="text-red-500/50 hover:text-red-500">
-                    <i class="fas fa-trash"></i>
+        <tr class="hover:bg-white/5 transition-colors">
+            <td class="p-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-10 bg-surface-container rounded overflow-hidden shrink-0">
+                        <img src="${getCoverUrl(b.coverUrl)}" class="w-full h-full object-cover" alt="Sampul">
+                    </div>
+                    <div class="min-w-0">
+                        <div class="font-semibold text-white text-xs truncate">${b.title}</div>
+                        <div class="text-[10px] text-on-surface-variant truncate">${b.author}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="p-3 text-right whitespace-nowrap">
+                <button onclick="deleteBook('${b.id}')" class="text-error/50 hover:text-error transition-colors p-2">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
                 </button>
             </td>
         </tr>
@@ -399,6 +483,7 @@ function handleLogoClick() {
 
 function logout() {
     isAdmin = false;
+    sessionStorage.removeItem('isAdmin');
     document.getElementById('admin-link')?.classList.add('hidden');
     document.getElementById('logout-btn')?.classList.add('hidden');
     document.getElementById('login-link')?.classList.remove('hidden');
@@ -428,6 +513,16 @@ function closeAndShowPage(pageId) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initDB();
+
+    // Check existing admin session
+    if (isAdmin) {
+        document.getElementById('admin-link')?.classList.remove('hidden');
+        document.getElementById('logout-btn')?.classList.remove('hidden');
+        document.getElementById('login-link')?.classList.add('hidden');
+        document.getElementById('admin-link-mobile')?.classList.remove('hidden');
+        document.getElementById('logout-btn-mobile')?.classList.remove('hidden');
+        document.getElementById('login-link-mobile')?.classList.add('hidden');
+    }
 
     // -- Mobile Menu --
     const mobileBtn = document.getElementById('mobile-menu-btn');
@@ -461,11 +556,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value.trim();
+            // Normalisasi: Lowercase email untuk menghindari error auto-capitalization di HP
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const pass = document.getElementById('password').value.trim();
 
             if (email === 'admin@perpus.id' && pass === '654321') {
                 isAdmin = true;
+                sessionStorage.setItem('isAdmin', 'true');
                 
                 // Update UI Navigation
                 document.getElementById('admin-link')?.classList.remove('hidden');
@@ -479,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showPage('admin-dashboard');
                 render();
             } else {
-                alert('Email atau Password salah! Pastikan Email: admin@perpus.id dan Password: 654321');
+                alert('Email atau Password salah! Pastikan Email: admin@perpus.id (huruf kecil) dan Password: 654321');
             }
         });
     }

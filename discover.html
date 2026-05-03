@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html lang="id">
+
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Delpik Digital - Membaca adalah Jendela Dunia</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "on-background": "#00f2ff",
+                        "on-error": "#690005",
+                        "primary": "#00f2ff",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "on-surface-variant": "#00f2ff",
+                        "surface-container": "#201f1f",
+                        "on-secondary-container": "#00f2ff",
+                        "on-primary-container": "#006a71",
+                        "on-tertiary-container": "#9b00d2",
+                        "tertiary-fixed-dim": "#ecb2ff",
+                        "surface-container-low": "#1c1b1b",
+                        "primary-container": "#00f2ff",
+                        "tertiary-container": "#f5ceff",
+                        "secondary-container": "#0043eb",
+                        "on-tertiary": "#520071",
+                        "tertiary-fixed": "#f8d8ff",
+                        "on-primary": "#00363a",
+                        "surface-variant": "#353534",
+                        "secondary": "#b8c3ff",
+                        "on-secondary": "#002388",
+                        "inverse-on-surface": "#313030",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary": "#fff5fc",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#001356",
+                        "on-secondary-fixed-variant": "#0035be",
+                        "outline": "#00f2ff",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#dde1ff",
+                        "background": "#131313",
+                        "surface-bright": "#393939",
+                        "outline-variant": "#3a494b",
+                        "on-tertiary-fixed-variant": "#74009f",
+                        "on-tertiary-fixed": "#320047",
+                        "primary-fixed": "#74f5ff",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-dim": "#131313",
+                        "inverse-primary": "#00696f",
+                        "on-surface": "#00f2ff",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#004f54",
+                        "surface-tint": "#00dbe7",
+                        "primary-fixed-dim": "#00dbe7",
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary-fixed": "#002022"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "sm": "12px",
+                        "md": "24px",
+                        "unit": "8px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "xl": "80px",
+                        "lg": "48px",
+                        "margin": "32px",
+                        "stack-sm": "12px",
+                        "stack-md": "24px",
+                        "stack-lg": "48px",
+                        "py-stack-lg": "48px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Manrope"],
+                        "h1": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "headline-xl": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h3": ["24px", { "lineHeight": "1.4", "letterSpacing": "0em", "fontWeight": "600" }],
+                        "h1": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "h2": ["32px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    },
+                    "animation": {
+                        "glow-pulse": "glow-pulse 3s infinite ease-in-out"
+                    },
+                    "keyframes": {
+                        "glow-pulse": {
+                            "0%, 100%": { "text-shadow": "0 0 10px rgba(0, 242, 255, 0.4)" },
+                            "50%": { "text-shadow": "0 0 20px rgba(0, 242, 255, 0.8), 0 0 30px rgba(0, 242, 255, 0.4)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass {
+            background: rgba(0, 242, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+        }
+
+        .glass-input {
+            background: rgba(0, 242, 255, 0.03);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        .glow-text {
+            color: #00f2ff;
+            animation: glow-pulse 3s infinite ease-in-out;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+            background-color: #131313;
+        }
+    </style>
+</head>
+
+<body class="font-body-md text-primary flex flex-col min-h-screen">
+    <!-- TopAppBar -->
+    <header
+        class="bg-surface border-b border-outline-variant shadow-[0_4px_20px_rgba(0,0,0,0.5)] docked full-width top-0 sticky z-50">
+        <div class="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
+            <div class="flex items-center gap-4">
+                <button
+                    class="active:opacity-70 transition-opacity p-2 hover:bg-surface-container-high transition-colors rounded-full">
+                    <span class="material-symbols-outlined text-primary">menu</span>
+                </button>
+                <span class="text-lg font-extrabold text-primary font-h1 antialiased tracking-tight">Delpik
+                    Digital</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button
+                    class="active:opacity-70 transition-opacity p-2 hover:bg-surface-container-high transition-colors rounded-full">
+                    <span class="material-symbols-outlined text-primary">search</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <main class="flex-grow w-full max-w-[1440px] mx-auto px-6 py-10">
+        <!-- Search Header Section -->
+        <div class="mb-lg">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter mb-md">
+                <div>
+                    <h1 class="font-headline-xl text-headline-xl text-primary glow-text mb-2">Hasil Pencarian</h1>
+                    <p class="font-body-md text-body-md text-primary">Menampilkan hasil untuk <span
+                            class="text-primary font-bold">"Sastra Modern"</span></p>
+                </div>
+                <div class="w-full md:w-96">
+                    <div class="relative group">
+                        <span
+                            class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+                        <input
+                            class="w-full pl-12 pr-4 py-3 bg-surface-container border border-outline-variant rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-primary placeholder-primary/50"
+                            placeholder="Cari buku, penulis, atau topik..." type="text" value="Sastra Modern" />
+                    </div>
+                </div>
+            </div>
+            <!-- Filters Chips -->
+            <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <span
+                    class="bg-primary text-on-primary-container px-4 py-1.5 rounded-full text-label-md font-label-md whitespace-nowrap shadow-[0_0_15px_rgba(0,242,255,0.2)]">Semua</span>
+                <span
+                    class="bg-surface-container-highest text-primary px-4 py-1.5 rounded-full text-label-md font-label-md whitespace-nowrap hover:bg-outline-variant cursor-pointer transition-colors">Buku
+                    Cetak</span>
+                <span
+                    class="bg-surface-container-highest text-primary px-4 py-1.5 rounded-full text-label-md font-label-md whitespace-nowrap hover:bg-outline-variant cursor-pointer transition-colors">E-Book</span>
+                <span
+                    class="bg-surface-container-highest text-primary px-4 py-1.5 rounded-full text-label-md font-label-md whitespace-nowrap hover:bg-outline-variant cursor-pointer transition-colors">Jurnal</span>
+                <span
+                    class="bg-surface-container-highest text-primary px-4 py-1.5 rounded-full text-label-md font-label-md whitespace-nowrap hover:bg-outline-variant cursor-pointer transition-colors">Terbaru</span>
+            </div>
+        </div>
+        <!-- Bento Grid Results -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+            <!-- Featured Result -->
+            <div
+                class="md:col-span-8 bg-surface-container rounded-xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-outline-variant group hover:border-primary transition-colors duration-300">
+                <div class="md:w-1/3 h-64 md:h-auto overflow-hidden">
+                    <img alt="Book Cover"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA9S1Je5Nx_-qh83iXOVKJVnL2PrUPV_xNid39yUc6H_EeeMSCzDOcfShn5wIfIvbX7pdK8aOuaCnbwkarpXApzNQf1LVlY6Y6Rhl86cavKWipswVy5NHMt95oyUvYfTZOnka36iVrFnK8S6GgcS88pFVvzS2BD4wUcbC4JlNXv5JX0MZz8COO9Oj0k3VS4JT5VmQ1k9AEfxDC8j6jWAXO0ORlXy-4djL2od85NKiMnF3QdBQAB1b_Zlhw2AF4MRNiPToPe2d6k5HA" />
+                </div>
+                <div class="md:w-2/3 p-8 flex flex-col">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span
+                            class="bg-primary/20 text-primary px-3 py-1 rounded-lg text-label-sm font-label-sm border border-primary/30">Rekomendasi
+                            Utama</span>
+                        <div class="flex items-center text-primary">
+                            <span class="material-symbols-outlined text-sm"
+                                style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span class="text-label-sm ml-1">4.9</span>
+                        </div>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-primary mb-2">Puitika Ruang Modern</h3>
+                    <p class="font-label-md text-primary mb-4">Oleh Prof. Ananda Putra</p>
+                    <p class="font-body-md text-primary/80 mb-6 line-clamp-3">Eksplorasi mendalam mengenai bagaimana
+                        arsitektur dan sastra modern saling bersilangan dalam membentuk identitas urban masyarakat
+                        kontemporer di Asia Tenggara.</p>
+                    <div class="mt-auto flex items-center justify-between">
+                        <button
+                            class="bg-primary text-on-primary-container px-6 py-2.5 rounded-lg font-label-md hover:brightness-110 transition-all active:scale-95 duration-200 shadow-[0_0_15px_rgba(0,242,255,0.2)]">
+                            Baca Sekarang
+                        </button>
+                        <button class="p-2 text-primary hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined">bookmark</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Side Quick Result -->
+            <div
+                class="md:col-span-4 bg-secondary-container p-8 rounded-xl text-primary flex flex-col justify-center border border-primary/20">
+                <span class="material-symbols-outlined text-4xl mb-4 text-primary">auto_stories</span>
+                <h3 class="font-headline-md text-headline-md mb-2 text-primary">Koleksi Terkurasi</h3>
+                <p class="font-body-md text-primary opacity-90 mb-6">Dapatkan akses ke ribuan jurnal sastra modern yang
+                    baru saja didigitalkan bulan ini.</p>
+                <a class="font-label-md flex items-center gap-2 underline underline-offset-4 text-primary hover:opacity-80 transition-opacity"
+                    href="#">
+                    Lihat Koleksi Jurnal
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </a>
+            </div>
+            <!-- Standard Grid Items -->
+            <div
+                class="md:col-span-4 lg:col-span-3 bg-surface-container p-4 rounded-xl shadow-lg border border-outline-variant flex flex-col group hover:border-primary transition-colors">
+                <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-4">
+                    <img alt="Book Cover"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuADSsoju8hbpDyLuBIuFeQkeVFWBhSTzuB3b3Ltt7WQxy677WIcZIpqqPjaPNwiegt-sotv2XRtD1-Yi-ZGoiefN1xRxSonRfPiOHmaRcMj-O7PQptX1CnZUakBzp2enG2sYTHpx1jpDB3HUzhrQk6Q9lb9NkoM2azaS6TXtjEy4fmoxKSJ_8zq9H4alNJNdQRwVD4ZPi_3rRceG6rjZH7eZ9bQCEcEPumE-prGBFgiz4D5AqvuMQwpOnRsp2BeB65LsumChjWUR-lA" />
+                    <div class="absolute top-2 right-2 bg-surface/80 backdrop-blur-md p-1.5 rounded-full shadow-sm">
+                        <span class="material-symbols-outlined text-primary text-[20px]">download_done</span>
+                    </div>
+                </div>
+                <h4 class="font-headline-md text-body-lg font-bold text-primary line-clamp-1 mb-1">Dinamika Narasi</h4>
+                <p class="font-body-sm text-primary/80 mb-3">Dr. Sarah Wijaya</p>
+                <div class="mt-auto h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div class="h-full bg-primary w-[65%]"></div>
+                </div>
+                <p class="text-[10px] font-label-sm text-primary/60 mt-2">65% Selesai dibaca</p>
+            </div>
+            <div
+                class="md:col-span-4 lg:col-span-3 bg-surface-container p-4 rounded-xl shadow-lg border border-outline-variant flex flex-col group hover:border-primary transition-colors">
+                <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-4">
+                    <img alt="Book Cover"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoaOqbh-2qVAkEs87Fum0hFRewg2x95nLQk-HMYJN8cLWZWIlnEDipw9DxT69xVvb76WMo8KqMkc-MGlbRD5v_ZDmUr6MFPcco8ZZFzwxZyxzX1M7EKSx6B-5LY31rCK1g44FF9dUI5AhIkhl6M-6YkyVHIqjZNvHggjgZ9xT7KCZ6Zd5EnRTIoP3kZGAqVIhmDCl76pffvmI69D1je3x2AdONPusJuEn8FZ5PwF2DkOLJ388iWvvfGdF7CcbB8zHpUYKyJDXm8hSx" />
+                </div>
+                <h4 class="font-headline-md text-body-lg font-bold text-primary line-clamp-1 mb-1">Struktur Modernitas
+                </h4>
+                <p class="font-body-sm text-primary/80 mb-3">Budi Santoso</p>
+                <button
+                    class="w-full border border-primary text-primary py-2 rounded-lg font-label-md hover:bg-primary/10 transition-colors mt-auto">Detail
+                    Buku</button>
+            </div>
+            <div
+                class="md:col-span-4 lg:col-span-3 bg-surface-container p-4 rounded-xl shadow-lg border border-outline-variant flex flex-col group hover:border-primary transition-colors">
+                <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-4">
+                    <img alt="Book Cover"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN_uPNTjtgNFKEOf_v8KfCPsvoEvMCeyDmztzezYYiCYfkP4FFi461qaD2hBz5nacqrlbKaKiF59ccyi2X7wcYnRKECMZMYWotiLAIHgT_3hUw1q_HlwVpesjWdQP56oVU5c1GcrDyibkfRxZK3XjW8-3ctzlWJW7fg903YyK09kLwQ3st0DiGARn8Yw_RCfn5JVuqXnd5av1AL_vBGay0kiDWezz3dLUTkYp1RGMPgGAq71LO1E2_tt23tWBVNZe82GzQw0F8gccA" />
+                </div>
+                <h4 class="font-headline-md text-body-lg font-bold text-primary line-clamp-1 mb-1">Antologi Cerpen 2023
+                </h4>
+                <p class="font-body-sm text-primary/80 mb-3">Berbagai Penulis</p>
+                <button
+                    class="w-full border border-primary text-primary py-2 rounded-lg font-label-md hover:bg-primary/10 transition-colors mt-auto">Detail
+                    Buku</button>
+            </div>
+            <div
+                class="md:col-span-4 lg:col-span-3 bg-surface-container p-4 rounded-xl shadow-lg border border-outline-variant flex flex-col group hover:border-primary transition-colors">
+                <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-4">
+                    <img alt="Book Cover"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdIkUu87nPbDdqD8_0HCWrni1PwYBsnXGusZTnQigMeKWES-7GyYLQ0u5gkQiMjYTqfCkzehDH8yEEulIzkURwBw8M7CHQz1bsYhT0kM7ydzi7Wb3z9qlSSM9AUAaWTc25qrXPGan5qQ6Q700r5xbQW1TJMH8q-9352Iz_eWJIBUz7Np1xDWhoxTzv1OtH51rK5uUO6mDEATyL86ctHviHtZJKug902EUgzyoYb4R0VblLmIL3FH0MQDy0a3gXMBxa1SipKVnOCjhZ" />
+                </div>
+                <h4 class="font-headline-md text-body-lg font-bold text-primary line-clamp-1 mb-1">Teori Kritik Sastra
+                </h4>
+                <p class="font-body-sm text-primary/80 mb-3">Prof. H. Maryanto</p>
+                <button
+                    class="w-full border border-primary text-primary py-2 rounded-lg font-label-md hover:bg-primary/10 transition-colors mt-auto">Detail
+                    Buku</button>
+            </div>
+        </div>
+        <!-- Pagination -->
+        <div class="mt-lg flex justify-center items-center gap-4">
+            <button
+                class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-primary hover:border-primary transition-all">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <div class="flex gap-2">
+                <span
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-on-primary-container font-label-md shadow-[0_0_10px_rgba(0,242,255,0.3)]">1</span>
+                <span
+                    class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-high transition-colors cursor-pointer font-label-md">2</span>
+                <span
+                    class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-high transition-colors cursor-pointer font-label-md">3</span>
+                <span
+                    class="w-10 h-10 flex items-center justify-center rounded-full text-primary font-label-md">...</span>
+                <span
+                    class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-high transition-colors cursor-pointer font-label-md">12</span>
+            </div>
+            <button
+                class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-primary hover:border-primary transition-all">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer
+        class="bg-surface-container-lowest border-t border-outline-variant w-full py-8 px-6 flex flex-col items-center gap-4 mt-auto mb-20">
+        <div class="flex gap-6">
+            <a class="font-body-sm text-xs text-primary hover:brightness-125 transition-colors" href="#">Privacy</a>
+            <a class="font-body-sm text-xs text-primary hover:brightness-125 transition-colors" href="#">Terms</a>
+            <a class="font-body-sm text-xs text-primary hover:brightness-125 transition-colors" href="#">Support</a>
+        </div>
+        <div class="font-body-sm text-xs text-primary text-center">
+            <p class="font-bold mb-1">Delpik Digital</p>
+            <p>© 2023 Delpik Digital v1.2.0</p>
+        </div>
+    </footer>
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav
+        class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 h-20 pb-safe bg-surface/90 backdrop-blur-lg border-t border-primary/20 shadow-xl rounded-t-xl">
+        <a class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-xl px-3 py-1 scale-95 transition-transform"
+            href="index.html">
+            <span class="material-symbols-outlined">home</span>
+            <span class="font-h1 text-[11px] font-medium">Home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-primary/60 hover:text-primary transition-colors scale-95"
+            href="library.html">
+            <span class="material-symbols-outlined">local_library</span>
+            <span class="font-h1 text-[11px] font-medium">Library</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-primary/60 hover:text-primary transition-colors scale-95"
+            href="discover.html">
+            <span class="material-symbols-outlined">explore</span>
+            <span class="font-h1 text-[11px] font-medium">Discover</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-primary/60 hover:text-primary transition-colors scale-95"
+            href="library.html">
+            <span class="material-symbols-outlined">person</span>
+            <span class="font-h1 text-[11px] font-medium">Profile</span>
+        </a>
+    </nav>
+</body>
+
+</html>
